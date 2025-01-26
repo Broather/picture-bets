@@ -64,15 +64,18 @@ function handle_next() {
     remove_children(buttons, 'button')
     index++
     if (index < picture_bets.length) {
+        // TODO: abstract to a single function (code repeats in load event listener)
+        update_counter()
         populate_table(picture_bets[order[index]].chips)
         populate_buttons(picture_bets[order[index]].answer)
-        times.push(Math.floor((Date.now() - start) / 1000))
+        times.push(parseFloat(((Date.now() - start) / 1000).toFixed(2)))
+        start = Date.now()
     } else {
         const total_time = times.reduce((previous, current) => previous + current, 0)
         // show results
         add_text(document.body, 'h2', 'thanks for playing')
         add_text(document.body, 'h3', `you answered ${picture_bets.length} picture bets in ${total_time} seconds`)
-        add_text(document.body, 'h3', `average time to answer was ${total_time / times.length} seconds`)
+        add_text(document.body, 'h3', `average time to answer was ${(total_time / times.length).toFixed(2)} seconds`)
         add_text(document.body, 'a', 'play again', { href: 'index.html' })
     }
 }
@@ -105,8 +108,13 @@ function populate_buttons(answer) {
         add_button(buttons, answer + (i + 1))
     }
 }
+function update_counter() {
+    const h2 = document.getElementById('counter')
+    h2.textContent = `${index + 1}/${picture_bets.length} picture bets`
+}
 
 addEventListener('load', (event) => {
+    update_counter()
     populate_table(picture_bets[order[index]].chips)
     populate_buttons(picture_bets[order[index]].answer)
     start = Date.now()
