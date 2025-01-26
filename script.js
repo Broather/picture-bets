@@ -17,6 +17,7 @@ const picture_bets = [{ chips: [{ x: 0, y: 0 }, { x: 1, y: 3 }], answer: 40 },
 
 const order = shuffle(Array.from({ length: picture_bets.length }, (_, index) => index))
 var start = -1
+var mistake_counter = 0
 const times = []
 
 function shuffle(array) {
@@ -49,6 +50,7 @@ function handle_answer(event) {
             document.getElementById('next').removeAttribute('hidden')
         } else {
             this.classList.add('incorrect')
+            mistake_counter++
         }
     }
 }
@@ -74,7 +76,7 @@ function handle_next() {
         const total_time = times.reduce((previous, current) => previous + current, 0)
         // show results
         add_text(document.body, 'h2', 'thanks for playing')
-        add_text(document.body, 'h3', `you answered ${picture_bets.length} picture bets in ${total_time.toFixed(2)} seconds`)
+        add_text(document.body, 'h3', `you answered ${picture_bets.length} picture bets in ${total_time.toFixed(2)} seconds with ${mistake_counter} mistake/-s`)
         add_text(document.body, 'h3', `average time to answer was ${(total_time / times.length).toFixed(2)} seconds`)
         add_text(document.body, 'a', 'play again', { href: 'index.html' })
     }
