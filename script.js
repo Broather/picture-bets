@@ -16,6 +16,8 @@ const picture_bets = [{ chips: [{ x: 0, y: 0 }, { x: 1, y: 3 }], answer: 40 },
 { chips: [{ x: 0, y: 2 }, { x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 2 }, { x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 2 }, { x: 2, y: 3 }, { x: 2, y: 4 }], answer: 135 }]
 
 const order = shuffle(Array.from({ length: picture_bets.length }, (_, index) => index))
+var start = -1
+const times = []
 
 function shuffle(array) {
     // Fisher-Yates Shuffle Algorithm
@@ -25,7 +27,6 @@ function shuffle(array) {
     }
     return array;
 }
-
 function add_circle(parent, x, y, radius = 2) {
     const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
     circle.setAttribute("cx", x)
@@ -65,12 +66,25 @@ function handle_next() {
     if (index < picture_bets.length) {
         populate_table(picture_bets[order[index]].chips)
         populate_buttons(picture_bets[order[index]].answer)
+        times.push(Math.floor((Date.now() - start) / 1000))
     } else {
+        const total_time = times.reduce((previous, current) => previous + current, 0)
         // show results
-        h2 = document.createElement('h2')
-        h2.textContent = "thanks for playing, reload page to play again"
-        document.body.appendChild(h2)
+        add_text(document.body, 'h2', 'thanks for playing')
+        add_text(document.body, 'h3', `you answered ${picture_bets.length} picture bets in ${total_time} seconds`)
+        add_text(document.body, 'h3', `average time to answer was ${total_time / times.length} seconds`)
+        add_text(document.body, 'a', 'play again', { href: 'index.html' })
     }
+}
+function add_text(parent, child_type, text, attributes = null) {
+    const element = document.createElement(child_type)
+    if (attributes != null) {
+        for (const key in attributes) {
+            element.setAttribute(key, attributes[key])
+        }
+    }
+    element.textContent = text
+    parent.appendChild(element)
 }
 function add_button(parent, text) {
     const button = document.createElement('button')
@@ -95,4 +109,5 @@ function populate_buttons(answer) {
 addEventListener('load', (event) => {
     populate_table(picture_bets[order[index]].chips)
     populate_buttons(picture_bets[order[index]].answer)
+    start = Date.now()
 })
