@@ -74,7 +74,7 @@ function handle_next() {
         const total_time = times.reduce((previous, current) => previous + current, 0)
         // show results
         add_text(document.body, 'h2', 'thanks for playing')
-        add_text(document.body, 'h3', `you answered ${picture_bets.length} picture bets in ${total_time} seconds`)
+        add_text(document.body, 'h3', `you answered ${picture_bets.length} picture bets in ${total_time.toFixed(2)} seconds`)
         add_text(document.body, 'h3', `average time to answer was ${(total_time / times.length).toFixed(2)} seconds`)
         add_text(document.body, 'a', 'play again', { href: 'index.html' })
     }
@@ -97,14 +97,15 @@ function add_button(parent, text) {
 }
 function populate_buttons(answer) {
     const buttons = document.getElementById('buttons')
-    const button_count = 3
-    n = order[index] % button_count
+    const total_buttons = 3
+
+    n = Math.floor(Math.random() * total_buttons)
     for (let i = 0; i < n; i++) {
         add_button(buttons, answer - (n - i))
     }
     add_button(buttons, answer)
 
-    for (let i = 0; i < button_count - (n + 1); i++) {
+    for (let i = 0; i < total_buttons - (n + 1); i++) {
         add_button(buttons, answer + (i + 1))
     }
 }
