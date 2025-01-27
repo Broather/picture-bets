@@ -16,6 +16,7 @@ const picture_bets = [{ chips: [{ x: 0, y: 0 }, { x: 1, y: 3 }], answer: 40 },
 { chips: [{ x: 0, y: 2 }, { x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 2 }, { x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 2 }, { x: 2, y: 3 }, { x: 2, y: 4 }], answer: 135 }]
 
 const order = shuffle(Array.from({ length: picture_bets.length }, (_, index) => index))
+const multipliers = Array.from({ length: picture_bets.length }, (_, index) => index % 3 + 1)
 var start = -1
 var mistake_counter = 0
 const times = []
@@ -28,24 +29,28 @@ function shuffle(array) {
     }
     return array;
 }
-function add_circle(parent, x, y, radius = 2) {
+function add_circle(parent, x, y, radius, multiplier,) {
     const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
     circle.setAttribute("cx", x)
     circle.setAttribute("cy", y)
     circle.setAttribute("r", radius)
     parent.appendChild(circle)
 }
-function populate_table(chips, x_offset = 12, y_offset = 0, x_step = 6, y_step = 5) {
-    // console.log(`adding picture bet chips ${JSON.stringify(chips)}`)
+function populate_table(chips, multiplier, x_offset = 12, y_offset = 0, x_step = 6, y_step = 5, radius = 2) {
     const table = document.getElementById('table')
     chips.forEach((element, index, array) => {
-        add_circle(table, (element.x * x_step) + x_offset, (element.y * y_step) + y_offset)
+        add_circle(table, (element.x * x_step) + x_offset, (element.y * y_step) + y_offset, radius, multiplier)
+        add_text(table,
+            'text',
+            `x${multiplier}`,
+            { x: (element.x * x_step) + (x_offset - radius / 2), y: (element.y * y_step) + (y_offset + radius / 4) },
+            namespace = 'http://www.w3.org/2000/svg')
     });
 }
 function handle_answer(event) {
     // console.log("handling button:", event)
     if (this.className == "") {
-        if (parseInt(this.textContent) == picture_bets[order[index]].answer) {
+        if (parseInt(this.textContent) == picture_bets[order[index]].answer * multipliers[order[index]]) {
             this.classList.add('correct')
             document.getElementById('next').removeAttribute('hidden')
         } else {
@@ -63,13 +68,14 @@ function handle_next() {
     const table = document.getElementById('table')
     const buttons = document.getElementById('buttons')
     remove_children(table, 'circle')
+    remove_children(table, 'text')
     remove_children(buttons, 'button')
     index++
     if (index < picture_bets.length) {
         // TODO: abstract to a single function (code repeats in load event listener)
         update_counter()
-        populate_table(picture_bets[order[index]].chips)
-        populate_buttons(picture_bets[order[index]].answer)
+        populate_table(picture_bets[order[index]].chips, multipliers[order[index]])
+        populate_buttons(picture_bets[order[index]].answer, multipliers[order[index]])
         times.push(parseFloat(((Date.now() - start) / 1000).toFixed(2)))
         start = Date.now()
     } else {
@@ -81,8 +87,13 @@ function handle_next() {
         add_text(document.body, 'a', 'play again', { href: 'index.html' })
     }
 }
-function add_text(parent, child_type, text, attributes = null) {
-    const element = document.createElement(child_type)
+function add_text(parent, child_type, text, attributes = null, namespace = null) {
+    var element;
+    if (namespace != null) {
+        element = document.createElementNS(namespace, child_type)
+    } else {
+        element = document.createElement(child_type)
+    }
     if (attributes != null) {
         for (const key in attributes) {
             element.setAttribute(key, attributes[key])
@@ -97,18 +108,18 @@ function add_button(parent, text) {
     button.addEventListener('click', handle_answer)
     parent.appendChild(button)
 }
-function populate_buttons(answer) {
+function populate_buttons(answer, multiplier) {
     const buttons = document.getElementById('buttons')
     const total_buttons = 3
 
     n = Math.floor(Math.random() * total_buttons)
     for (let i = 0; i < n; i++) {
-        add_button(buttons, answer - (n - i))
+        add_button(buttons, answer * multiplier - (n - i))
     }
-    add_button(buttons, answer)
+    add_button(buttons, answer * multiplier)
 
     for (let i = 0; i < total_buttons - (n + 1); i++) {
-        add_button(buttons, answer + (i + 1))
+        add_button(buttons, answer * multiplier + (i + 1))
     }
 }
 function update_counter() {
@@ -118,7 +129,7 @@ function update_counter() {
 
 addEventListener('load', (event) => {
     update_counter()
-    populate_table(picture_bets[order[index]].chips)
-    populate_buttons(picture_bets[order[index]].answer)
+    populate_table(picture_bets[order[index]].chips, multipliers[order[index]])
+    populate_buttons(picture_bets[order[index]].answer, multipliers[order[index]])
     start = Date.now()
 })
