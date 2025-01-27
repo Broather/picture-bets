@@ -50,7 +50,7 @@ function populate_table(chips, multiplier, x_offset = 12, y_offset = 0, x_step =
 function handle_answer(event) {
     // console.log("handling button:", event)
     if (this.className == "") {
-        if (parseInt(this.textContent) == picture_bets[order[index]].answer * multipliers[order[index]]) {
+        if (parseInt(this.textContent) == picture_bets[order[index]].answer * multipliers[index]) {
             this.classList.add('correct')
             document.getElementById('next').removeAttribute('hidden')
         } else {
@@ -74,8 +74,8 @@ function handle_next() {
     if (index < picture_bets.length) {
         // TODO: abstract to a single function (code repeats in load event listener)
         update_counter()
-        populate_table(picture_bets[order[index]].chips, multipliers[order[index]])
-        populate_buttons(picture_bets[order[index]].answer, multipliers[order[index]])
+        populate_table(picture_bets[order[index]].chips, multipliers[index])
+        populate_buttons(picture_bets[order[index]].answer, multipliers[index])
         times.push(parseFloat(((Date.now() - start) / 1000).toFixed(2)))
         start = Date.now()
     } else {
@@ -129,7 +129,7 @@ function update_counter() {
 
 addEventListener('load', (event) => {
     update_counter()
-    populate_table(picture_bets[order[index]].chips, multipliers[order[index]])
-    populate_buttons(picture_bets[order[index]].answer, multipliers[order[index]])
+    populate_table(picture_bets[order[index]].chips, multipliers[index])
+    populate_buttons(picture_bets[order[index]].answer, multipliers[index])
     start = Date.now()
 })
