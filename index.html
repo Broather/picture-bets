@@ -1,82 +1,48 @@
 <!doctype html>
-<html lang="eng">
+<html lang="">
 
     <head>
-        <script src="script.js"></script>
         <meta charset="utf-8">
         <title></title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>
-            rect,
-            polygon {
-                fill: white;
-                stroke: black;
-                stroke-width: .2
-            }
-
-            button {
-                width: 30%;
-                font-size: large;
-                height: 30px;
-                margin: 1%;
-            }
-
-            button:hover {
-                background-color: lightgrey;
-            }
-
-            circle {
-                fill: darkred;
-            }
-
-            text {
-                fill: white;
-                font-size: 2px;
-            }
-
-            .correct {
-                background-color: green;
-                color: white
-            }
-
-            .correct:hover {
-                background-color: darkgreen;
-            }
-
-            .incorrect {
-                background-color: red;
-                color: white
-            }
-
-            .incorrect:hover {
-                background-color: darkred;
-            }
-        </style>
     </head>
 
     <body>
-        <h2 id="counter"></h2>
-        <svg id="table" viewBox="-1 -3 47 34" xmlns="http://www.w3.org/2000/svg">
-            <rect x="0" y="0" width="12" height="10" />
-            <rect x="12" y="0" width="12" height="10" />
-            <rect x="24" y="0" width="12" height="10" />
-            <rect x="0" y="10" width="12" height="10" />
-            <rect x="12" y="10" width="12" height="10" />
-            <rect x="24" y="10" width="12" height="10" />
-            <rect x="0" y="20" width="12" height="10" />
-            <rect x="12" y="20" width="12" height="10" />
-            <rect x="24" y="20" width="12" height="10" />
-            <rect x="0" y="-.1" width="36" height="1" />
-            <polygon points="36,0 45,15 36,30"></polygon>
-        </svg>
-        <div class="center" id="buttons">
-        </div>
-        <div class="container">
-            <div class="child">
-                <button id="next" hidden onclick="handle_next()">Next</button>
-            </div>
-        </div>
+        <form id="form">
+            <ul>
+                <li>
+                    <input type="checkbox" name="common_pb" id="common_pb">
+                    <label for="common_pb">Common picture bets</label>
+                </li>
+                <li>
+                    <input type="checkbox" name="uncommon_pb" id="uncommon_pb">
+                    <label for="uncommon_pb">Uncommon picture bets</label>
+                </li>
+                <li>
+                    <input type="checkbox" name="around_zero_pb" id="around_zero_pb">
+                    <label for="around_zero_pb">Around zero picture bets</label>
+                </li>
+            </ul>
+            <input type="submit" value="Start">
+        </form>
+
     </body>
+
+    <script>
+        document.getElementById('form').addEventListener('submit', (event) => {
+            event.preventDefault()
+            // TODO: expose pb_mapping from sript.js and loop through it's keys using .keys
+            const keys = ['common_pb', 'uncommon_pb', 'around_zero_pb']
+            // save values to sessionStorage
+            for (key of keys) {
+                sessionStorage.setItem(key, document.getElementById(key).checked)
+            }
+
+            if (keys.some((key) => sessionStorage.getItem(key) === 'true')) {
+                window.location.href = 'game.html'
+            }
+        })
+    </script>
 
 </html>

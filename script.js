@@ -1,6 +1,38 @@
 var index = 0
-const picture_bets = [
-    { chips: [{ x: 2, y: 2 }, { x: 1, y: 3 }], answer: 43 },
+var picture_bets = []
+var order = null
+var multipliers = null
+
+const around_zero = [{ chips: [{ x: 2, y: 0 }, { x: 2, y: 2 }, { x: 2, y: 3 }, { x: 2, y: 4 }, { x: 3, y: 0 }, { x: 3, y: 2 }, { x: 3, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 0 }, { x: 4, y: 2 }, { x: 4, y: 3 }, { x: 4, y: 4 }], answer: 165 },
+{ chips: [{ x: 3, y: 2 }, { x: 3, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 2 }, { x: 4, y: 3 }, { x: 4, y: 4 }], answer: 108 },
+{ chips: [{ x: 4, y: 0 }, { x: 4, y: 1 }], answer: 25 },
+{ chips: [{ x: 4, y: 1 }, { x: 4, y: 3 }, { x: 4, y: 5 }, { x: 5, y: 3 }], answer: 86 },
+{ chips: [{ x: 4, y: 0 }, { x: 4, y: 2 }, { x: 4, y: 4 }, { x: 5, y: 3 }], answer: 65 },
+{ chips: [{ x: 2, y: 2 }, { x: 3, y: 2 }, { x: 4, y: 2 }], answer: 36 },
+{ chips: [{ x: 4, y: 0 }, { x: 4, y: 1 }, { x: 4, y: 2 }, { x: 4, y: 3 }, { x: 4, y: 4 }, { x: 4, y: 5 }, { x: 5, y: 3 }], answer: 116 },
+{ chips: [{ x: 4, y: 0 }, { x: 4, y: 1 }, { x: 4, y: 2 }], answer: 36 },
+{ chips: [{ x: 2, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 2 }, { x: 3, y: 3 }, { x: 4, y: 2 }, { x: 4, y: 3 }], answer: 105 },
+{ chips: [{ x: 4, y: 0 }, { x: 4, y: 1 }, { x: 4, y: 2 }, { x: 4, y: 3 }, { x: 4, y: 4 }, { x: 4, y: 5 }], answer: 81 },
+{ chips: [{ x: 2, y: 0 }, { x: 3, y: 0 }, { x: 4, y: 0 }], answer: 24 },
+{ chips: [{ x: 4, y: 1 }, { x: 4, y: 2 }, { x: 4, y: 3 }, { x: 4, y: 4 }, { x: 4, y: 5 }], answer: 73 },
+{ chips: [{ x: 4, y: 0 }, { x: 4, y: 2 }, { x: 4, y: 4 }], answer: 30 },
+{ chips: [{ x: 2, y: 0 }, { x: 2, y: 1 }, { x: 2, y: 2 }, { x: 3, y: 0 }, { x: 3, y: 1 }, { x: 3, y: 2 }, { x: 4, y: 0 }, { x: 4, y: 1 }, { x: 4, y: 2 }], answer: 129 },
+{ chips: [{ x: 4, y: 2 }, { x: 4, y: 3 }, { x: 4, y: 4 }], answer: 39 }]
+
+const uncommon = [{ chips: [{ x: 0, y: 0 }, { x: 0, y: 2 },], answer: 13 },
+{ chips: [{ x: 1, y: 0 }, { x: 1, y: 2 },], answer: 28 },
+{ chips: [{ x: 0, y: 0 }, { x: 1, y: 0 },], answer: 16 },
+{ chips: [{ x: 1, y: 3 }, { x: 2, y: 2 },], answer: 43 },
+{ chips: [{ x: 2, y: 0 }, { x: 2, y: 1 },], answer: 22 },
+{ chips: [{ x: 1, y: 0 }, { x: 1, y: 1 },], answer: 46 },
+{ chips: [{ x: 0, y: 2 }, { x: 1, y: 0 },], answer: 19 },
+{ chips: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 },], answer: 21 },
+{ chips: [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 2 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 2, y: 1 }, { x: 2, y: 2 },], answer: 71 },
+{ chips: [{ x: 1, y: 2 }, { x: 2, y: 2 }, { x: 2, y: 3 },], answer: 42 },
+{ chips: [{ x: 0, y: 0 }, { x: 0, y: 2 }, { x: 0, y: 3 }, { x: 1, y: 2 },], answer: 47 },
+{ chips: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 3 },], answer: 86 },
+{ chips: [{ x: 1, y: 0 }, { x: 1, y: 1 }, { x: 1, y: 2 },], answer: 63 }]
+const common = [
     { chips: [{ x: 0, y: 0 }, { x: 1, y: 3 }], answer: 40 },
     { chips: [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 2 }], answer: 30 },
     { chips: [{ x: 0, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 4 }], answer: 51 },
@@ -17,8 +49,7 @@ const picture_bets = [
     { chips: [{ x: 0, y: 2 }, { x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 2, y: 2 }, { x: 2, y: 3 }, { x: 2, y: 4 }], answer: 100 },
     { chips: [{ x: 0, y: 2 }, { x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 2 }, { x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 2 }, { x: 2, y: 3 }, { x: 2, y: 4 }], answer: 135 }]
 
-const order = shuffle(Array.from({ length: picture_bets.length }, (_, index) => index))
-const multipliers = Array.from({ length: picture_bets.length }, (_, index) => index % 3 + 1)
+
 var start = -1
 var mistake_counter = 0
 const times = []
@@ -86,7 +117,7 @@ function handle_next() {
         add_text(document.body, 'h2', 'thanks for playing')
         add_text(document.body, 'h3', `you answered ${picture_bets.length} picture bets in ${total_time.toFixed(2)} seconds with ${mistake_counter} mistake/-s`)
         add_text(document.body, 'h3', `average time to answer was ${(total_time / times.length).toFixed(2)} seconds`)
-        add_text(document.body, 'a', 'play again', { href: 'index.html' })
+        add_text(document.body, 'a', 'play again', { href: 'game.html' })
     }
 }
 function add_text(parent, child_type, text, attributes = null, namespace = null) {
@@ -129,7 +160,21 @@ function update_counter() {
     h2.textContent = `${index + 1}/${picture_bets.length} picture bets`
 }
 
+function key_is_set(key) {
+    return sessionStorage.getItem(key) != null
+}
+
 addEventListener('load', (event) => {
+    const pb_mapping = { 'common_pb': common, 'uncommon_pb': uncommon, 'around_zero_pb': around_zero }
+    for (key in pb_mapping) {
+        if (key_is_set(key) && sessionStorage.getItem(key) === 'true') {
+            picture_bets = picture_bets.concat(pb_mapping[key])
+        }
+    }
+
+    order = shuffle(Array.from({ length: picture_bets.length }, (_, index) => index))
+    multipliers = Array.from({ length: picture_bets.length }, (_, index) => index % 3 + 1)
+
     update_counter()
     populate_table(picture_bets[order[index]].chips, multipliers[index])
     populate_buttons(picture_bets[order[index]].answer, multipliers[index])
