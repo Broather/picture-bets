@@ -172,7 +172,7 @@ addEventListener('load', (event) => {
     }
 
     order = shuffle(Array.from({ length: picture_bets.length }, (_, index) => index))
-    multipliers = Array.from({ length: picture_bets.length }, (_, index) => index % 3 + 1)
+    multipliers = shuffle(Array.from({ length: picture_bets.length }, (_, index) => index % 7 + 1))
 
     update_counter()
     populate_table(picture_bets[order[index]].chips, multipliers[index])
