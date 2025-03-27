@@ -61,17 +61,30 @@ function shuffle(array) {
     }
     return array;
 }
-function add_circle(parent, x, y, radius, multiplier,) {
+function add_chip(parent, x, y, radius, multiplier,) {
     const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
     circle.setAttribute("cx", x)
     circle.setAttribute("cy", y)
     circle.setAttribute("r", radius)
+    circle.setAttribute("stroke", "white")
+    circle.setAttribute("stroke-width", 0.3)
+    circle.setAttribute("stroke-dasharray", "0.3, 0.6")
+    const inner_circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+    inner_circle.setAttribute("cx", x)
+    inner_circle.setAttribute("cy", y)
+    inner_circle.setAttribute("r", radius - 0.3 * radius)
+    // stroke="white" stroke-width="0.1" stroke-dasharray="0.25" 
+    inner_circle.setAttribute("stroke", "white")
+    inner_circle.setAttribute("stroke-width", 0.1)
+    inner_circle.setAttribute("stroke-dasharray", 0.25)
+
     parent.appendChild(circle)
+    parent.appendChild(inner_circle)
 }
 function populate_table(chips, multiplier, x_offset = 12, y_offset = 0, x_step = 6, y_step = 5, radius = 2) {
     const table = document.getElementById('table')
     chips.forEach((element, index, array) => {
-        add_circle(table, (element.x * x_step) + x_offset, (element.y * y_step) + y_offset, radius, multiplier)
+        add_chip(table, (element.x * x_step) + x_offset, (element.y * y_step) + y_offset, radius, multiplier)
         add_text(table,
             'text',
             `x${multiplier}`,
