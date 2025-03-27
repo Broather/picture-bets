@@ -6,27 +6,30 @@
         <title></title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="style.css">
     </head>
 
     <body>
-        <form id="form">
-            <ul>
-                <li>
-                    <input type="checkbox" name="common_pb" id="common_pb">
-                    <label for="common_pb">Common picture bets</label>
-                </li>
-                <li>
-                    <input type="checkbox" name="uncommon_pb" id="uncommon_pb">
-                    <label for="uncommon_pb">Uncommon picture bets</label>
-                </li>
-                <li>
-                    <input type="checkbox" name="around_zero_pb" id="around_zero_pb">
-                    <label for="around_zero_pb">Around zero picture bets</label>
-                </li>
-            </ul>
-            <input type="submit" value="Start">
-        </form>
-
+        <div class="rootContainer">
+            <h1>Picture bets</h1>
+            <form id="form">
+                <ul>
+                    <li>
+                        <input type="checkbox" name="common_pb" id="common_pb">
+                        <label for="common_pb">Common picture bets</label>
+                    </li>
+                    <li>
+                        <input type="checkbox" name="uncommon_pb" id="uncommon_pb">
+                        <label for="uncommon_pb">Uncommon picture bets</label>
+                    </li>
+                    <li>
+                        <input type="checkbox" name="around_zero_pb" id="around_zero_pb">
+                        <label for="around_zero_pb">Around zero picture bets</label>
+                    </li>
+                </ul>
+                <input class="big" type="submit" value="Play">
+            </form>
+        </div>
     </body>
 
     <script>

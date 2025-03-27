@@ -32,23 +32,22 @@ const uncommon = [{ chips: [{ x: 0, y: 0 }, { x: 0, y: 2 },], answer: 13 },
 { chips: [{ x: 0, y: 0 }, { x: 0, y: 2 }, { x: 0, y: 3 }, { x: 1, y: 2 },], answer: 47 },
 { chips: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 3 },], answer: 86 },
 { chips: [{ x: 1, y: 0 }, { x: 1, y: 1 }, { x: 1, y: 2 },], answer: 63 }]
-const common = [
-    { chips: [{ x: 0, y: 0 }, { x: 1, y: 3 }], answer: 40 },
-    { chips: [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 2 }], answer: 30 },
-    { chips: [{ x: 0, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 4 }], answer: 51 },
-    { chips: [{ x: 0, y: 3 }, { x: 1, y: 3 }], answer: 52 },
-    { chips: [{ x: 0, y: 2 }, { x: 0, y: 3 }], answer: 25 },
-    { chips: [{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }], answer: 33 },
-    { chips: [{ x: 0, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 2 }], answer: 51 },
-    { chips: [{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 1, y: 3 }], answer: 60 },
-    { chips: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }], answer: 103 },
-    { chips: [{ x: 0, y: 2 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 2, y: 2 }, { x: 2, y: 4 }], answer: 67 },
-    { chips: [{ x: 0, y: 2 }, { x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 2 }, { x: 2, y: 3 }], answer: 102 },
-    { chips: [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 2, y: 0 }, { x: 2, y: 1 }], answer: 90 },
-    { chips: [{ x: 0, y: 2 }, { x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 2, y: 2 }, { x: 2, y: 3 }, { x: 2, y: 4 }], answer: 101 },
-    { chips: [{ x: 0, y: 2 }, { x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 2, y: 2 }, { x: 2, y: 3 }, { x: 2, y: 4 }], answer: 100 },
-    { chips: [{ x: 0, y: 2 }, { x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 2 }, { x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 2 }, { x: 2, y: 3 }, { x: 2, y: 4 }], answer: 135 }]
 
+const common = [{ chips: [{ x: 0, y: 0 }, { x: 1, y: 3 }], answer: 40 },
+{ chips: [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 2 }], answer: 30 },
+{ chips: [{ x: 0, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 4 }], answer: 51 },
+{ chips: [{ x: 0, y: 3 }, { x: 1, y: 3 }], answer: 52 },
+{ chips: [{ x: 0, y: 2 }, { x: 0, y: 3 }], answer: 25 },
+{ chips: [{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }], answer: 33 },
+{ chips: [{ x: 0, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 2 }], answer: 51 },
+{ chips: [{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 1, y: 3 }], answer: 60 },
+{ chips: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }], answer: 103 },
+{ chips: [{ x: 0, y: 2 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 2, y: 2 }, { x: 2, y: 4 }], answer: 67 },
+{ chips: [{ x: 0, y: 2 }, { x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 2 }, { x: 2, y: 3 }], answer: 102 },
+{ chips: [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 2, y: 0 }, { x: 2, y: 1 }], answer: 90 },
+{ chips: [{ x: 0, y: 2 }, { x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 2, y: 2 }, { x: 2, y: 3 }, { x: 2, y: 4 }], answer: 101 },
+{ chips: [{ x: 0, y: 2 }, { x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 2, y: 2 }, { x: 2, y: 3 }, { x: 2, y: 4 }], answer: 100 },
+{ chips: [{ x: 0, y: 2 }, { x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 2 }, { x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 2 }, { x: 2, y: 3 }, { x: 2, y: 4 }], answer: 135 }]
 
 var start = -1
 var mistake_counter = 0
@@ -157,7 +156,7 @@ function populate_buttons(answer, multiplier) {
 }
 function update_counter() {
     const h2 = document.getElementById('counter')
-    h2.textContent = `${index + 1}/${picture_bets.length} picture bets`
+    h2.textContent = `${index + 1}/${picture_bets.length}`
 }
 
 function key_is_set(key) {

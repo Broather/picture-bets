@@ -1,0 +1,66 @@
+.rootContainer {
+    margin: 0 auto;
+    width: 500px;
+}
+
+span {
+    font-size: 2em;
+    font-weight: bold;
+}
+
+button,
+input,
+label {
+    font-size: 25px;
+    width: 100px;
+}
+
+button.big,
+input.big {
+    font-size: 35px;
+    width: 150px;
+}
+
+.flex {
+    align-items: center;
+    justify-content: space-around;
+    display: flex;
+}
+
+rect,
+polygon {
+    fill: white;
+    stroke: black;
+    stroke-width: .2
+}
+
+button:hover {
+    background-color: lightgrey;
+}
+
+circle {
+    fill: darkred;
+}
+
+text {
+    fill: white;
+    font-size: 2px;
+}
+
+.correct {
+    background-color: green;
+    color: white
+}
+
+.correct:hover {
+    background-color: darkgreen;
+}
+
+.incorrect {
+    background-color: red;
+    color: white
+}
+
+.incorrect:hover {
+    background-color: darkred;
+}
