@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="">
+
+    <head>
+        <meta charset="utf-8">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="style.css">
+    </head>
+
+    <body>
+        <div class="center">
+            <div class="center" style="width: fit-content;">
+                <span id="average"></span>
+                <p>average time</p>
+                <span id="bet_count"></span>
+                <p>picture bets</p>
+                <span id="total"></span>
+                <p>total time</p>
+            </div>
+            <div class="flex">
+                <a href="game.html">retry</a>
+                <a href="index.html">main menu</a>
+            </div>
+        </div>
+    </body>
+    <script>
+        window.addEventListener("load", (event) => {
+            const average = document.getElementById("average")
+            if (sessionStorage.getItem("average_time") != null) {
+                average.textContent = `${sessionStorage.getItem("average_time")} s`
+            } else {
+                console.log("expected average_time to be set in sessionStorage")
+            }
+            const bet_count = document.getElementById("bet_count")
+            if (sessionStorage.getItem("bet_count") != null) {
+                bet_count.textContent = `${sessionStorage.getItem("bet_count")}`
+            } else {
+                console.log("expected bet_count to be set in sessionStorage")
+            }
+            const total = document.getElementById("total")
+            if (sessionStorage.getItem("total_time") != null) {
+                total.textContent = `${sessionStorage.getItem("total_time")} s`
+            } else {
+                console.log("expected total_time to be set in sessionStorage")
+            }
+        })
+    </script>
+
+</html>

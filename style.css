@@ -1,4 +1,4 @@
-.rootContainer {
+.center {
     margin: 0 auto;
     max-width: 500px;
 }
@@ -6,6 +6,10 @@
 span {
     font-size: 2em;
     font-weight: bold;
+}
+
+p {
+    margin-top: 5px;
 }
 
 button,
@@ -25,6 +29,11 @@ input.big {
     align-items: center;
     justify-content: space-around;
     display: flex;
+}
+
+svg {
+    display: block;
+    margin: 0 auto;
 }
 
 rect,

@@ -73,7 +73,6 @@ function add_chip(parent, x, y, radius, multiplier,) {
     inner_circle.setAttribute("cx", x)
     inner_circle.setAttribute("cy", y)
     inner_circle.setAttribute("r", radius - 0.3 * radius)
-    // stroke="white" stroke-width="0.1" stroke-dasharray="0.25" 
     inner_circle.setAttribute("stroke", "white")
     inner_circle.setAttribute("stroke-width", 0.1)
     inner_circle.setAttribute("stroke-dasharray", 0.25)
@@ -124,12 +123,12 @@ function handle_next() {
         times.push(parseFloat(((Date.now() - start) / 1000).toFixed(2)))
         start = Date.now()
     } else {
+        // results
         const total_time = times.reduce((previous, current) => previous + current, 0)
-        // show results
-        add_text(document.body, 'h2', 'thanks for playing')
-        add_text(document.body, 'h3', `you answered ${picture_bets.length} picture bets in ${total_time.toFixed(2)} seconds with ${mistake_counter} mistake/-s`)
-        add_text(document.body, 'h3', `average time to answer was ${(total_time / times.length).toFixed(2)} seconds`)
-        add_text(document.body, 'a', 'play again', { href: 'game.html' })
+        sessionStorage.setItem("average_time", `${(total_time / times.length).toFixed(2)}`)
+        sessionStorage.setItem("bet_count", `${picture_bets.length}`)
+        sessionStorage.setItem("total_time", `${total_time.toFixed(2)}`)
+        window.location.href = 'result.html'
     }
 }
 function add_text(parent, child_type, text, attributes = null, namespace = null) {
@@ -168,8 +167,8 @@ function populate_buttons(answer, multiplier) {
     }
 }
 function update_counter() {
-    const h2 = document.getElementById('counter')
-    h2.textContent = `${index + 1}/${picture_bets.length}`
+    const counter = document.getElementById('counter')
+    counter.textContent = `${index + 1}/${picture_bets.length}`
 }
 
 function key_is_set(key) {
