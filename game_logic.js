@@ -1,3 +1,5 @@
+import { add_element, remove_children } from "./utility.js"
+
 var index = 0
 var picture_bets = []
 var order = null
@@ -62,33 +64,31 @@ function shuffle(array) {
     return array;
 }
 function add_chip(parent, x, y, radius, multiplier,) {
-    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
-    circle.setAttribute("cx", x)
-    circle.setAttribute("cy", y)
-    circle.setAttribute("r", radius)
-    circle.setAttribute("stroke", "white")
-    circle.setAttribute("stroke-width", 0.3)
-    circle.setAttribute("stroke-dasharray", "0.3, 0.6")
-    const inner_circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
-    inner_circle.setAttribute("cx", x)
-    inner_circle.setAttribute("cy", y)
-    inner_circle.setAttribute("r", radius - 0.3 * radius)
-    inner_circle.setAttribute("stroke", "white")
-    inner_circle.setAttribute("stroke-width", 0.1)
-    inner_circle.setAttribute("stroke-dasharray", 0.25)
-
-    parent.appendChild(circle)
-    parent.appendChild(inner_circle)
+    add_element(parent,
+        'circle',
+        null,
+        { cx: x, cy: y, r: radius, stroke: "white", "stroke-width": 0.3, "stroke-dasharray": "0.3, 0.6" },
+        'http://www.w3.org/2000/svg',)
+    add_element(parent,
+        'circle',
+        null,
+        { cx: x, cy: y, r: radius - 0.3 * radius, stroke: "white", "stroke-width": 0.1, "stroke-dasharray": 0.25 },
+        'http://www.w3.org/2000/svg')
+    add_element(parent,
+        'text',
+        `x${multiplier}`,
+        { x: x - radius / 2, y: y + radius / 4 },
+        'http://www.w3.org/2000/svg')
 }
 function populate_table(chips, multiplier, x_offset = 12, y_offset = 0, x_step = 6, y_step = 5, radius = 2) {
     const table = document.getElementById('table')
     chips.forEach((element, index, array) => {
         add_chip(table, (element.x * x_step) + x_offset, (element.y * y_step) + y_offset, radius, multiplier)
-        add_text(table,
+        add_element(table,
             'text',
             `x${multiplier}`,
             { x: (element.x * x_step) + (x_offset - radius / 2), y: (element.y * y_step) + (y_offset + radius / 4) },
-            namespace = 'http://www.w3.org/2000/svg')
+            'http://www.w3.org/2000/svg')
     });
 }
 function handle_answer(event) {
@@ -103,10 +103,7 @@ function handle_answer(event) {
         }
     }
 }
-function remove_children(parent, type) {
-    const children = parent.querySelectorAll(type);
-    children.forEach(child => parent.removeChild(child));
-}
+
 function handle_next() {
     document.getElementById('next').setAttribute('hidden', 'hidden')
     const table = document.getElementById('table')
@@ -131,21 +128,6 @@ function handle_next() {
         window.location.href = 'result.html'
     }
 }
-function add_text(parent, child_type, text, attributes = null, namespace = null) {
-    var element;
-    if (namespace != null) {
-        element = document.createElementNS(namespace, child_type)
-    } else {
-        element = document.createElement(child_type)
-    }
-    if (attributes != null) {
-        for (const key in attributes) {
-            element.setAttribute(key, attributes[key])
-        }
-    }
-    element.textContent = text
-    parent.appendChild(element)
-}
 function add_button(parent, text) {
     const button = document.createElement('button')
     button.textContent = text
@@ -156,7 +138,7 @@ function populate_buttons(answer, multiplier) {
     const buttons = document.getElementById('buttons')
     const total_buttons = 3
 
-    n = Math.floor(Math.random() * total_buttons)
+    const n = Math.floor(Math.random() * total_buttons)
     for (let i = 0; i < n; i++) {
         add_button(buttons, answer * multiplier - (n - i))
     }
@@ -176,8 +158,10 @@ function key_is_set(key) {
 }
 
 addEventListener('load', (event) => {
+    document.getElementById("next").onclick = handle_next
+
     const pb_mapping = { 'common_pb': common, 'uncommon_pb': uncommon, 'around_zero_pb': around_zero }
-    for (key in pb_mapping) {
+    for (let key in pb_mapping) {
         if (key_is_set(key) && sessionStorage.getItem(key) === 'true') {
             picture_bets = picture_bets.concat(pb_mapping[key])
         }
