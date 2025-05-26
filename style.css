@@ -45,7 +45,7 @@ input.big {
     width: 150px;
 }
 
-.flex {
+.row {
     align-items: center;
     justify-content: space-around;
     display: flex;

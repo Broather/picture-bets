@@ -11,40 +11,40 @@
 
     <body>
         <div class="center">
-            <div class="center" style="width: fit-content;">
-                <span id="average"></span>
-                <p>average time</p>
-                <span id="bet_count"></span>
-                <p>picture bets</p>
-                <span id="total"></span>
-                <p>total time</p>
+            <div class="row">
+                <p>score</p>
+                <h1 id="score">6969</h1>
             </div>
-            <div class="flex">
-                <a href="game.html">retry</a>
+            <div class="row">
+                <p>quickest picture bet</p>
+                <h1 id="quickest">69 (2.30 s)</h1>
+            </div>
+            <div class="row">
+                <p>average time</p>
+                <h1 id="average"></h1>
+            </div>
+            <div class="row">
+                <p>accuracy</p>
+                <h1 id="accuracy"></h1>
+            </div>
+            <div class="row">
+                <a href="game.html">play again</a>
                 <a href="index.html">main menu</a>
             </div>
         </div>
     </body>
     <script>
+        function read_session_storage(identifier) {
+            const element = document.getElementById(identifier)
+            console.assert(sessionStorage.getItem(identifier) != null,
+                `ERROR: expected ${identifier} to be set in sessionStorage`)
+            element.textContent = `${sessionStorage.getItem(identifier)}`
+        }
         window.addEventListener("load", (event) => {
-            const average = document.getElementById("average")
-            if (sessionStorage.getItem("average_time") != null) {
-                average.textContent = `${sessionStorage.getItem("average_time")} s`
-            } else {
-                console.log("expected average_time to be set in sessionStorage")
-            }
-            const bet_count = document.getElementById("bet_count")
-            if (sessionStorage.getItem("bet_count") != null) {
-                bet_count.textContent = `${sessionStorage.getItem("bet_count")}`
-            } else {
-                console.log("expected bet_count to be set in sessionStorage")
-            }
-            const total = document.getElementById("total")
-            if (sessionStorage.getItem("total_time") != null) {
-                total.textContent = `${sessionStorage.getItem("total_time")} s`
-            } else {
-                console.log("expected total_time to be set in sessionStorage")
-            }
+            read_session_storage("score")
+            read_session_storage("quickest")
+            read_session_storage("average")
+            read_session_storage("accuracy")
         })
     </script>
 

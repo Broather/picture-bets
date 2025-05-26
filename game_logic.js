@@ -43,6 +43,7 @@ const common = [{ chips: [{ x: 0, y: 0 }, { x: 1, y: 3 }], answer: 40 },
 { chips: [{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }], answer: 33 },
 { chips: [{ x: 0, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 2 }], answer: 51 },
 { chips: [{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 1, y: 3 }], answer: 60 },
+{ chips: [{ x: 0, y: 3 }, { x: 1, y: 3 }, { x: 2, y: 3 }], answer: 69 },
 { chips: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }], answer: 103 },
 { chips: [{ x: 0, y: 2 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 2, y: 2 }, { x: 2, y: 4 }], answer: 67 },
 { chips: [{ x: 0, y: 2 }, { x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 2 }, { x: 2, y: 3 }], answer: 102 },
@@ -121,10 +122,12 @@ function handle_next() {
         start = Date.now()
     } else {
         // results
-        const total_time = times.reduce((previous, current) => previous + current, 0)
-        sessionStorage.setItem("average_time", `${(total_time / times.length).toFixed(2)}`)
-        sessionStorage.setItem("bet_count", `${picture_bets.length}`)
-        sessionStorage.setItem("total_time", `${total_time.toFixed(2)}`)
+        const average_time = (times.reduce((a, b) => a + b, 0) / times.length)
+        const accuracy = (picture_bets.length - mistake_counter) / picture_bets.length
+        sessionStorage.setItem("score", `${parseInt((30 / average_time) * accuracy)}`)
+        sessionStorage.setItem("quickest", `${picture_bets[order[times.indexOf(Math.min(...times))]].answer} (${Math.min(...times)} s)`)
+        sessionStorage.setItem("average", `${average_time.toFixed(2)} s`)
+        sessionStorage.setItem("accuracy", `${parseInt(100 * accuracy)} %`)
         window.location.href = 'result.html'
     }
 }
