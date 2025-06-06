@@ -60,16 +60,19 @@ rect,
 polygon {
     fill: white;
     stroke: black;
-    stroke-width: .2
+    stroke-width: .01px
+}
+
+circle {
+    fill: darkred;
+    stroke-width: .05px;
+    stroke-dasharray: .07;
 }
 
 button:hover {
     background-color: lightgrey;
 }
 
-circle {
-    fill: darkred;
-}
 
 text {
     fill: white;

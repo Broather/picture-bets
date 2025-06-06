@@ -64,7 +64,7 @@ function shuffle(array) {
     }
     return array;
 }
-function add_chip(parent, x, y, radius, multiplier,) {
+function add_chip(parent, x, y, radius, multiplier = null) {
     add_element(parent,
         'circle',
         null,
@@ -75,11 +75,13 @@ function add_chip(parent, x, y, radius, multiplier,) {
         null,
         { cx: x, cy: y, r: radius - 0.3 * radius, stroke: "white", "stroke-width": 0.1, "stroke-dasharray": 0.25 },
         'http://www.w3.org/2000/svg')
-    add_element(parent,
-        'text',
-        `x${multiplier}`,
-        { x: x - radius / 2, y: y + radius / 4 },
-        'http://www.w3.org/2000/svg')
+    if (multiplier != null) {
+        add_element(parent,
+            'text',
+            `x${multiplier}`,
+            { x: x - radius / 2, y: y + radius / 4 },
+            'http://www.w3.org/2000/svg')
+    }
 }
 function populate_table(chips, multiplier, x_offset = 12, y_offset = 0, x_step = 6, y_step = 5, radius = 2) {
     const table = document.getElementById('table')
@@ -160,6 +162,69 @@ function key_is_set(key) {
     return sessionStorage.getItem(key) != null
 }
 
+const AR = {
+    SIXL: 5,
+    CORNER: 8,
+    STREET: 11,
+    SPLIT: 17,
+    SU: 35
+}
+const TYPE = {
+    ZERO: 0,
+    _1: 1,
+    _2: 2,
+    _3: 3,
+    _4: 4,
+    _5: 5,
+    _6: 6,
+    _7: 7,
+}
+class Point {
+    constructor(x, y) {
+        this.x = x
+        this.y = y
+    }
+}
+class View {
+    constructor(positions, number_type, chip_placing_fn) {
+        const tl = new Point(6, 1)
+        const br = new Point(10, 16)
+        const base_svg = [
+            { type: "rect", properties: { x: 6, y: 0, width: 4, height: 1 } },
+            { type: "rect", properties: { x: 6, y: 1, width: 4, height: 5 } },
+            { type: "rect", properties: { x: 6, y: 6, width: 4, height: 5 } },
+            { type: "rect", properties: { x: 6, y: 11, width: 4, height: 5 } },
+        ]
+        this.base_coordinate_matrix = View.generate_matrix(tl, br, 7, 3)
+        this.chips = []
+        if ([TYPE._1, TYPE._4, TYPE._5].includes(number_type)) {
+            const winning_square = number_type == TYPE._1 ? { tl: new Point(6, 6), br: new Point(10, 11) } :
+                { tl: new Point(6, 1), br: new Point(10, 6) }
+            this.svg = base_svg
+            this.coordinate_matrix = this.base_coordinate_matrix.filter((point) => point.y == tl.y || winning_square.tl.y <= point.y && point.y <= winning_square.br.y)
+
+            positions.forEach((position) => chip_placing_fn(position, this.chips, this.coordinate_matrix))
+        }
+    }
+    // tl - top left, br - bottom right
+    static generate_matrix(tl, br, n_rows, n_cols) {
+        const points = [];
+
+        const x_step = (br.x - tl.x) / (n_cols - 1);
+        const y_step = (br.y - tl.y) / (n_rows - 1);
+
+        for (let row = 0; row < n_rows; row++) {
+            for (let col = 0; col < n_cols; col++) {
+                const x = tl.x + col * x_step;
+                const y = tl.y + row * y_step;
+                points.push(new Point(x, y));
+            }
+        }
+
+        return points;
+    }
+
+}
 addEventListener('load', (event) => {
     document.getElementById("next").onclick = handle_next
 
@@ -174,7 +239,20 @@ addEventListener('load', (event) => {
     multipliers = shuffle(Array.from({ length: picture_bets.length }, (_, index) => index % 7 + 1))
 
     update_counter()
-    populate_table(picture_bets[order[index]].chips, multipliers[index])
+    const view = new View([AR.SU], TYPE._1, (position) => "returns nothing")
+    view.svg.forEach((svg_element) => {
+        add_element(document.getElementById("table"),
+            svg_element.type,
+            null,
+            svg_element.properties,
+            "http://www.w3.org/2000/svg"
+        )
+
+    }
+    )
+    view.coordinate_matrix.forEach((chip) =>
+        add_chip(document.getElementById("table"), chip.x, chip.y, .9))
+    // populate_table(picture_bets[order[index]].chips, multipliers[index])
     populate_buttons(picture_bets[order[index]].answer, multipliers[index])
     start = Date.now()
 })
