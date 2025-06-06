@@ -170,14 +170,14 @@ const AR = {
     SU: 35
 }
 const TYPE = {
-    ZERO: 0,
-    _1: 1,
-    _2: 2,
-    _3: 3,
-    _4: 4,
-    _5: 5,
-    _6: 6,
-    _7: 7,
+    ZERO: "0",
+    _1: "1",
+    _2: "2",
+    _3: "3",
+    _4: "4",
+    _5: "5",
+    _6: "6",
+    _7: "7",
 }
 class Point {
     constructor(x, y) {
@@ -185,23 +185,69 @@ class Point {
         this.y = y
     }
 }
+class Rectangle {
+    constructor(x, y, width, height, padding = null) {
+        this.x = x
+        this.y = y
+        this.width = width
+        this.height = height
+        this.padding = padding
+
+        this.tl = new Point(x, y)
+        this.br = new Point(x + width, y + height)
+        this.style = {}
+    }
+    ctrl_cv(changes = {}) {
+        return new Rectangle(
+            changes.x !== undefined ? changes.x : this.x,
+            changes.y !== undefined ? changes.y : this.y + this.height,
+            changes.width !== undefined ? changes.width : this.width,
+            changes.height !== undefined ? changes.height : this.height,
+            changes.padding !== undefined ? changes.padding : this.padding
+        )
+    }
+    set_style(style) {
+        this.style = { style: style }
+        return this
+    }
+    display() {
+        return Object.assign({
+            x: this.x + (this.padding ? this.padding : 0),
+            y: this.y + (this.padding ? this.padding : 0),
+            width: this.width - (this.padding ? 2 * this.padding : 0),
+            height: this.height - (this.padding ? 2 * this.padding : 0)
+        }, this.style)
+    }
+}
 class View {
     constructor(positions, number_type, chip_placing_fn) {
-        const tl = new Point(6, 1)
-        const br = new Point(10, 16)
-        const base_svg = [
-            { type: "rect", properties: { x: 6, y: 0, width: 4, height: 1 } },
-            { type: "rect", properties: { x: 6, y: 1, width: 4, height: 5 } },
-            { type: "rect", properties: { x: 6, y: 6, width: 4, height: 5 } },
-            { type: "rect", properties: { x: 6, y: 11, width: 4, height: 5 } },
-        ]
-        this.base_coordinate_matrix = View.generate_matrix(tl, br, 7, 3)
+        const background = new Rectangle(5.75, -.25, 4.5, 16.5).set_style("fill: black")
+        const header = new Rectangle(6, 0, 4, 1, .25)
+        const top = header.ctrl_cv({ height: 5 }).set_style("fill: red")
+        const middle = top.ctrl_cv().set_style("fill: orange")
+        const bottom = middle.ctrl_cv().set_style("fill: green")
+        const base_svg = [background, header, top, middle, bottom]
+        const winning_square = {
+            [TYPE._1]: middle,
+            [TYPE._2]: middle,
+            // TODO: replace 69 with something random
+            [TYPE._3]: 69 % 2 == 0 ? top : bottom,
+            [TYPE._4]: top,
+            [TYPE._5]: bottom,
+            // TODO: replace 69 with something random
+            [TYPE._6]: 69 % 2 == 0 ? top : bottom,
+            [TYPE._7]: middle,
+        }[number_type]
+
+        this.base_coordinate_matrix = View.generate_matrix(top.tl, bottom.br, 7, 3)
         this.chips = []
         if ([TYPE._1, TYPE._4, TYPE._5].includes(number_type)) {
-            const winning_square = number_type == TYPE._1 ? { tl: new Point(6, 6), br: new Point(10, 11) } :
-                { tl: new Point(6, 1), br: new Point(10, 6) }
             this.svg = base_svg
-            this.coordinate_matrix = this.base_coordinate_matrix.filter((point) => point.y == tl.y || winning_square.tl.y <= point.y && point.y <= winning_square.br.y)
+
+            function is_within_winning_square(point) { return winning_square.tl.y <= point.y && point.y <= winning_square.br.y }
+            function not_at_bottom_row(point) { return point.y != bottom.br.y }
+            this.coordinate_matrix = this.base_coordinate_matrix.filter((point) => point.y == top.tl.y ||
+                is_within_winning_square(point) && not_at_bottom_row(point))
 
             positions.forEach((position) => chip_placing_fn(position, this.chips, this.coordinate_matrix))
         }
@@ -239,17 +285,16 @@ addEventListener('load', (event) => {
     multipliers = shuffle(Array.from({ length: picture_bets.length }, (_, index) => index % 7 + 1))
 
     update_counter()
-    const view = new View([AR.SU], TYPE._1, (position) => "returns nothing")
+    const view = new View([AR.SU], TYPE._4, (position) => "returns nothing")
     view.svg.forEach((svg_element) => {
         add_element(document.getElementById("table"),
-            svg_element.type,
+            "rect",
             null,
-            svg_element.properties,
-            "http://www.w3.org/2000/svg"
-        )
-
+            svg_element.display(),
+            "http://www.w3.org/2000/svg")
     }
     )
+    // TODO: change to view.chips when appropriate
     view.coordinate_matrix.forEach((chip) =>
         add_chip(document.getElementById("table"), chip.x, chip.y, .9))
     // populate_table(picture_bets[order[index]].chips, multipliers[index])

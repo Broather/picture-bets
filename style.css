@@ -60,7 +60,7 @@ rect,
 polygon {
     fill: white;
     stroke: black;
-    stroke-width: .01px
+    stroke-width: .05px
 }
 
 circle {
