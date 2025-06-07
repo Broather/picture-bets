@@ -185,6 +185,11 @@ class Point {
         this.y = y
         this.position = null
     }
+    // counts how many references of `this` array contains
+    // NOTE: equality operator between points should work as intended as long as coordinates do not change
+    count(array) {
+        return array.filter((p) => p == this).length
+    }
     set_position(position) {
         this.position = position
     }
@@ -277,7 +282,7 @@ class View {
                 const winning_bottom = this.coordinate_matrix.filter((p) => p.y == winning_square.br.y)
                 Point.multiple_set_position(winning_bottom, AR.CORNER, AR.SPLIT, AR.CORNER)
             }
-            positions.forEach((position) => chip_placing_fn(position, this.chips, this.coordinate_matrix))
+            positions.forEach((position) => chip_placing_fn(this.chips, position, this.coordinate_matrix))
         }
     }
     // tl - top left, br - bottom right
@@ -287,8 +292,9 @@ class View {
         const x_step = (br.x - tl.x) / (n_cols - 1);
         const y_step = (br.y - tl.y) / (n_rows - 1);
 
-        for (let row = 0; row < n_rows; row++) {
-            for (let col = 0; col < n_cols; col++) {
+        // NOTE: columns first affects the order chips get placed in place_flat
+        for (let col = 0; col < n_cols; col++) {
+            for (let row = 0; row < n_rows; row++) {
                 const x = tl.x + col * x_step;
                 const y = tl.y + row * y_step;
                 points.push(new Point(x, y));
@@ -296,6 +302,14 @@ class View {
         }
 
         return points;
+    }
+    static place_flat(chip_array, position, available_positions) {
+        const filtered_positions = available_positions.filter((p) => p.position == position)
+
+        // sort by how many chips are on a specific position (ascending) and add the first one
+
+        chip_array.push(filtered_positions.toSorted((a, b) => a.count(chip_array) -
+            b.count(chip_array))[0])
     }
 
 }
@@ -313,7 +327,7 @@ addEventListener('load', (event) => {
     multipliers = shuffle(Array.from({ length: picture_bets.length }, (_, index) => index % 7 + 1))
 
     update_counter()
-    const view = new View([AR.SU], TYPE._1, (position) => "returns nothing")
+    const view = new View([AR.SU, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.CORNER, AR.SPLIT, AR.SPLIT, AR.SPLIT], TYPE._4, View.place_flat)
     view.svg.forEach((svg_element) => {
         add_element(document.getElementById("table"),
             "rect",
@@ -322,9 +336,8 @@ addEventListener('load', (event) => {
             "http://www.w3.org/2000/svg")
     }
     )
-    // TODO: change to view.chips when appropriate
-    view.coordinate_matrix.forEach((chip) =>
-        add_chip(document.getElementById("table"), chip.x, chip.y, .9, chip.position))
+    view.chips.forEach((chip, _, chip_array) =>
+        add_chip(document.getElementById("table"), chip.x, chip.y, .9, chip.count(chip_array)))
     // populate_table(picture_bets[order[index]].chips, multipliers[index])
     populate_buttons(picture_bets[order[index]].answer, multipliers[index])
     start = Date.now()
