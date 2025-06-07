@@ -183,6 +183,17 @@ class Point {
     constructor(x, y) {
         this.x = x
         this.y = y
+        this.position = null
+    }
+    set_position(position) {
+        this.position = position
+    }
+    static multiple_set_position(array, ...values) {
+        console.assert(array.length >= values.length,
+            `in multiple_set_positions: too many values given. Array has ${array.length}, gave ${values.length}`)
+        for (let i = 0; i < array.length; i++) {
+            array[i].set_position(values[i])
+        }
     }
 }
 class Rectangle {
@@ -195,6 +206,7 @@ class Rectangle {
 
         this.tl = new Point(x, y)
         this.br = new Point(x + width, y + height)
+        this.center = new Point(x + width / 2, y + height / 2)
         this.style = {}
     }
     ctrl_cv(changes = {}) {
@@ -240,15 +252,31 @@ class View {
         }[number_type]
 
         this.base_coordinate_matrix = View.generate_matrix(top.tl, bottom.br, 7, 3)
+
+        function is_within_winning_square(point) { return winning_square.tl.y <= point.y && point.y <= winning_square.br.y }
+        function not_at_bottom_row(point) { return point.y != bottom.br.y }
+        this.coordinate_matrix = this.base_coordinate_matrix.filter((point) => point.y == top.tl.y ||
+            is_within_winning_square(point) && not_at_bottom_row(point))
+
         this.chips = []
         if ([TYPE._1, TYPE._4, TYPE._5].includes(number_type)) {
             this.svg = base_svg
 
-            function is_within_winning_square(point) { return winning_square.tl.y <= point.y && point.y <= winning_square.br.y }
-            function not_at_bottom_row(point) { return point.y != bottom.br.y }
-            this.coordinate_matrix = this.base_coordinate_matrix.filter((point) => point.y == top.tl.y ||
-                is_within_winning_square(point) && not_at_bottom_row(point))
+            // top row is always SIXL, STREET, SIXL
+            const top_row = this.coordinate_matrix.filter((p) => p.y == top.tl.y)
+            Point.multiple_set_position(top_row, AR.SIXL, AR.STREET, AR.SIXL)
 
+            const winning_middle = this.coordinate_matrix.filter((p) => p.y == winning_square.center.y)
+            Point.multiple_set_position(winning_middle, AR.SPLIT, AR.SU, AR.SPLIT)
+
+            if (number_type == TYPE._1 || number_type == TYPE._5) {
+                const winning_top = this.coordinate_matrix.filter((p) => p.y == winning_square.tl.y)
+                Point.multiple_set_position(winning_top, AR.CORNER, AR.SPLIT, AR.CORNER)
+            }
+            if (number_type == TYPE._1 || number_type == TYPE._4) {
+                const winning_bottom = this.coordinate_matrix.filter((p) => p.y == winning_square.br.y)
+                Point.multiple_set_position(winning_bottom, AR.CORNER, AR.SPLIT, AR.CORNER)
+            }
             positions.forEach((position) => chip_placing_fn(position, this.chips, this.coordinate_matrix))
         }
     }
@@ -285,7 +313,7 @@ addEventListener('load', (event) => {
     multipliers = shuffle(Array.from({ length: picture_bets.length }, (_, index) => index % 7 + 1))
 
     update_counter()
-    const view = new View([AR.SU], TYPE._4, (position) => "returns nothing")
+    const view = new View([AR.SU], TYPE._1, (position) => "returns nothing")
     view.svg.forEach((svg_element) => {
         add_element(document.getElementById("table"),
             "rect",
@@ -296,7 +324,7 @@ addEventListener('load', (event) => {
     )
     // TODO: change to view.chips when appropriate
     view.coordinate_matrix.forEach((chip) =>
-        add_chip(document.getElementById("table"), chip.x, chip.y, .9))
+        add_chip(document.getElementById("table"), chip.x, chip.y, .9, chip.position))
     // populate_table(picture_bets[order[index]].chips, multipliers[index])
     populate_buttons(picture_bets[order[index]].answer, multipliers[index])
     start = Date.now()
