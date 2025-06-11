@@ -1,69 +1,57 @@
 import { add_element, remove_children } from "./utility.js"
 
-var index = 0
-var picture_bets = []
-var order = null
-var multipliers = null
-
-const around_zero = [{ chips: [{ x: 2, y: 0 }, { x: 2, y: 2 }, { x: 2, y: 3 }, { x: 2, y: 4 }, { x: 3, y: 0 }, { x: 3, y: 2 }, { x: 3, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 0 }, { x: 4, y: 2 }, { x: 4, y: 3 }, { x: 4, y: 4 }], answer: 165 },
-{ chips: [{ x: 3, y: 2 }, { x: 3, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 2 }, { x: 4, y: 3 }, { x: 4, y: 4 }], answer: 108 },
-{ chips: [{ x: 4, y: 0 }, { x: 4, y: 1 }], answer: 25 },
-{ chips: [{ x: 4, y: 1 }, { x: 4, y: 3 }, { x: 4, y: 5 }, { x: 5, y: 3 }], answer: 86 },
-{ chips: [{ x: 4, y: 0 }, { x: 4, y: 2 }, { x: 4, y: 4 }, { x: 5, y: 3 }], answer: 65 },
-{ chips: [{ x: 2, y: 2 }, { x: 3, y: 2 }, { x: 4, y: 2 }], answer: 36 },
-{ chips: [{ x: 4, y: 0 }, { x: 4, y: 1 }, { x: 4, y: 2 }, { x: 4, y: 3 }, { x: 4, y: 4 }, { x: 4, y: 5 }, { x: 5, y: 3 }], answer: 116 },
-{ chips: [{ x: 4, y: 0 }, { x: 4, y: 1 }, { x: 4, y: 2 }], answer: 36 },
-{ chips: [{ x: 2, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 2 }, { x: 3, y: 3 }, { x: 4, y: 2 }, { x: 4, y: 3 }], answer: 105 },
-{ chips: [{ x: 4, y: 0 }, { x: 4, y: 1 }, { x: 4, y: 2 }, { x: 4, y: 3 }, { x: 4, y: 4 }, { x: 4, y: 5 }], answer: 81 },
-{ chips: [{ x: 2, y: 0 }, { x: 3, y: 0 }, { x: 4, y: 0 }], answer: 24 },
-{ chips: [{ x: 4, y: 1 }, { x: 4, y: 2 }, { x: 4, y: 3 }, { x: 4, y: 4 }, { x: 4, y: 5 }], answer: 73 },
-{ chips: [{ x: 4, y: 0 }, { x: 4, y: 2 }, { x: 4, y: 4 }], answer: 30 },
-{ chips: [{ x: 2, y: 0 }, { x: 2, y: 1 }, { x: 2, y: 2 }, { x: 3, y: 0 }, { x: 3, y: 1 }, { x: 3, y: 2 }, { x: 4, y: 0 }, { x: 4, y: 1 }, { x: 4, y: 2 }], answer: 129 },
-{ chips: [{ x: 4, y: 2 }, { x: 4, y: 3 }, { x: 4, y: 4 }], answer: 39 }]
-
-const uncommon = [{ chips: [{ x: 0, y: 0 }, { x: 0, y: 2 },], answer: 13 },
-{ chips: [{ x: 1, y: 0 }, { x: 1, y: 2 },], answer: 28 },
-{ chips: [{ x: 0, y: 0 }, { x: 1, y: 0 },], answer: 16 },
-{ chips: [{ x: 1, y: 3 }, { x: 2, y: 2 },], answer: 43 },
-{ chips: [{ x: 2, y: 0 }, { x: 2, y: 1 },], answer: 22 },
-{ chips: [{ x: 1, y: 0 }, { x: 1, y: 1 },], answer: 46 },
-{ chips: [{ x: 0, y: 2 }, { x: 1, y: 0 },], answer: 19 },
-{ chips: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 },], answer: 21 },
-{ chips: [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 2 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 2, y: 1 }, { x: 2, y: 2 },], answer: 71 },
-{ chips: [{ x: 1, y: 2 }, { x: 2, y: 2 }, { x: 2, y: 3 },], answer: 42 },
-{ chips: [{ x: 0, y: 0 }, { x: 0, y: 2 }, { x: 0, y: 3 }, { x: 1, y: 2 },], answer: 47 },
-{ chips: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 3 },], answer: 86 },
-{ chips: [{ x: 1, y: 0 }, { x: 1, y: 1 }, { x: 1, y: 2 },], answer: 63 }]
-
-const common = [{ chips: [{ x: 0, y: 0 }, { x: 1, y: 3 }], answer: 40 },
-{ chips: [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 2 }], answer: 30 },
-{ chips: [{ x: 0, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 4 }], answer: 51 },
-{ chips: [{ x: 0, y: 3 }, { x: 1, y: 3 }], answer: 52 },
-{ chips: [{ x: 0, y: 2 }, { x: 0, y: 3 }], answer: 25 },
-{ chips: [{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }], answer: 33 },
-{ chips: [{ x: 0, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 2 }], answer: 51 },
-{ chips: [{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 1, y: 3 }], answer: 60 },
-{ chips: [{ x: 0, y: 3 }, { x: 1, y: 3 }, { x: 2, y: 3 }], answer: 69 },
-{ chips: [{ x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 3 }], answer: 103 },
-{ chips: [{ x: 0, y: 2 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 2, y: 2 }, { x: 2, y: 4 }], answer: 67 },
-{ chips: [{ x: 0, y: 2 }, { x: 0, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 2 }, { x: 2, y: 3 }], answer: 102 },
-{ chips: [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 2, y: 0 }, { x: 2, y: 1 }], answer: 90 },
-{ chips: [{ x: 0, y: 2 }, { x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 3 }, { x: 2, y: 2 }, { x: 2, y: 3 }, { x: 2, y: 4 }], answer: 101 },
-{ chips: [{ x: 0, y: 2 }, { x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 2 }, { x: 1, y: 4 }, { x: 2, y: 2 }, { x: 2, y: 3 }, { x: 2, y: 4 }], answer: 100 },
-{ chips: [{ x: 0, y: 2 }, { x: 0, y: 3 }, { x: 0, y: 4 }, { x: 1, y: 2 }, { x: 1, y: 3 }, { x: 1, y: 4 }, { x: 2, y: 2 }, { x: 2, y: 3 }, { x: 2, y: 4 }], answer: 135 }]
-
-var start = -1
-var mistake_counter = 0
-const times = []
-
-function shuffle(array) {
-    // Fisher-Yates Shuffle Algorithm
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
+const state = {
+    index: 0,
+    views: [],
+    get view() {
+        return this.views[this.index]
+    },
+    game_should_end() {
+        return this.index >= this.views.length
+    },
+    mistakes: 0,
+    tick: -1,
+    times: [],
+    delta_time(tock) {
+        this.times.push(parseFloat(((tock - this.tick) / 1000).toFixed(2)))
+    },
+    average_delta_time() {
+        return this.times.reduce((a, b) => a + b, 0) / this.times.length
     }
-    return array;
 }
+
+const AR = {
+    SIXL: 5,
+    CORNER: 8,
+    STREET: 11,
+    SPLIT: 17,
+    SU: 35
+}
+const POSITION = {
+    ZERO: "ZERO",
+    ZERO_TOP: "ZERO_TOP",
+    ZERO_MID: "ZERO_MID",
+    ZERO_BOT: "ZERO_BOT",
+    CENTER_TOP: "CENTER_TOP",
+    CENTER_MID: "CENTER_MID",
+    CENTER_BOT: "CENTER_BOT",
+    COLUMN_TOP: "COLUMN_TOP",
+    COLUMN_MID: "COLUMN_MID",
+    COLUMN_BOT: "COLUMN_BOT"
+}
+const picture_bets = {
+    pbs: {
+        // small
+        "43": [AR.SU, AR.CORNER],
+        // medium
+        "103": [AR.SU, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.SPLIT],
+        "102": [AR.SU, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.CORNER, AR.CORNER]
+    },
+    get(...keys) {
+        return keys.flatMap((key) => this.pbs[key] || [])
+    }
+}
+
 function add_chip(parent, x, y, radius, multiplier = null) {
     add_element(parent,
         'circle',
@@ -83,55 +71,36 @@ function add_chip(parent, x, y, radius, multiplier = null) {
             'http://www.w3.org/2000/svg')
     }
 }
-function populate_table(chips, multiplier, x_offset = 12, y_offset = 0, x_step = 6, y_step = 5, radius = 2) {
-    const table = document.getElementById('table')
-    chips.forEach((element, index, array) => {
-        add_chip(table, (element.x * x_step) + x_offset, (element.y * y_step) + y_offset, radius, multiplier)
-        add_element(table,
-            'text',
-            `x${multiplier}`,
-            { x: (element.x * x_step) + (x_offset - radius / 2), y: (element.y * y_step) + (y_offset + radius / 4) },
-            'http://www.w3.org/2000/svg')
-    });
-}
+
 function handle_answer(event) {
     // console.log("handling button:", event)
     if (this.className == "") {
-        if (parseInt(this.textContent) == picture_bets[order[index]].answer * multipliers[index]) {
+        if (parseInt(this.textContent) == state.view.get_payout()) {
             this.classList.add('correct')
             document.getElementById('next').removeAttribute('hidden')
         } else {
             this.classList.add('incorrect')
-            mistake_counter++
+            state.mistakes++
         }
     }
 }
 
 function handle_next() {
     document.getElementById('next').setAttribute('hidden', 'hidden')
-    const table = document.getElementById('table')
-    const buttons = document.getElementById('buttons')
-    remove_children(table, 'circle')
-    remove_children(table, 'text')
-    remove_children(buttons, 'button')
-    index++
-    if (index < picture_bets.length) {
-        // TODO: abstract to a single function (code repeats in load event listener)
-        update_counter()
-        populate_table(picture_bets[order[index]].chips, multipliers[index])
-        populate_buttons(picture_bets[order[index]].answer, multipliers[index])
-        times.push(parseFloat(((Date.now() - start) / 1000).toFixed(2)))
-        start = Date.now()
-    } else {
+    clear()
+    state.index++
+    if (state.game_should_end()) {
         // results
-        const average_time = (times.reduce((a, b) => a + b, 0) / times.length)
-        const accuracy = (picture_bets.length - mistake_counter) / picture_bets.length
-        sessionStorage.setItem("score", `${parseInt((30 / average_time) * accuracy)}`)
-        sessionStorage.setItem("quickest", `${picture_bets[order[times.indexOf(Math.min(...times))]].answer} (${Math.min(...times)} s)`)
+        const average_time = state.average_delta_time()
+        const accuracy = (state.views.length - state.mistakes) / state.views.length
+        sessionStorage.setItem("total", `${state.views.length}`)
         sessionStorage.setItem("average", `${average_time.toFixed(2)} s`)
         sessionStorage.setItem("accuracy", `${parseInt(100 * accuracy)} %`)
         window.location.href = 'result.html'
+        return
     }
+    state.delta_time(Date.now())
+    set_up()
 }
 function add_button(parent, text) {
     const button = document.createElement('button')
@@ -155,30 +124,10 @@ function populate_buttons(answer, multiplier) {
 }
 function update_counter() {
     const counter = document.getElementById('counter')
-    counter.textContent = `${index + 1}/${picture_bets.length}`
+    // TODO: re-implement
+    counter.textContent = `${state.index + 1}/${state.views.length}`
 }
 
-function key_is_set(key) {
-    return sessionStorage.getItem(key) != null
-}
-
-const AR = {
-    SIXL: 5,
-    CORNER: 8,
-    STREET: 11,
-    SPLIT: 17,
-    SU: 35
-}
-const TYPE = {
-    ZERO: "0",
-    _1: "1",
-    _2: "2",
-    _3: "3",
-    _4: "4",
-    _5: "5",
-    _6: "6",
-    _7: "7",
-}
 class Point {
     constructor(x, y) {
         this.x = x
@@ -245,15 +194,15 @@ class View {
         const bottom = middle.ctrl_cv().set_style("fill: green")
         const base_svg = [background, header, top, middle, bottom]
         const winning_square = {
-            [TYPE._1]: middle,
-            [TYPE._2]: middle,
-            // TODO: replace 69 with something random
-            [TYPE._3]: 69 % 2 == 0 ? top : bottom,
-            [TYPE._4]: top,
-            [TYPE._5]: bottom,
-            // TODO: replace 69 with something random
-            [TYPE._6]: 69 % 2 == 0 ? top : bottom,
-            [TYPE._7]: middle,
+            [POSITION.ZERO_TOP]: top,
+            [POSITION.ZERO_MID]: middle,
+            [POSITION.ZERO_BOT]: bottom,
+            [POSITION.CENTER_TOP]: top,
+            [POSITION.CENTER_MID]: middle,
+            [POSITION.CENTER_BOT]: bottom,
+            [POSITION.COLUMN_TOP]: top,
+            [POSITION.COLUMN_MID]: middle,
+            [POSITION.COLUMN_BOT]: bottom
         }[number_type]
 
         this.base_coordinate_matrix = View.generate_matrix(top.tl, bottom.br, 7, 3)
@@ -264,7 +213,7 @@ class View {
             is_within_winning_square(point) && not_at_bottom_row(point))
 
         this.chips = []
-        if ([TYPE._1, TYPE._4, TYPE._5].includes(number_type)) {
+        if ([POSITION.CENTER_TOP, POSITION.CENTER_MID, POSITION.CENTER_BOT].includes(number_type)) {
             this.svg = base_svg
 
             // top row is always SIXL, STREET, SIXL
@@ -274,16 +223,19 @@ class View {
             const winning_middle = this.coordinate_matrix.filter((p) => p.y == winning_square.center.y)
             Point.multiple_set_position(winning_middle, AR.SPLIT, AR.SU, AR.SPLIT)
 
-            if (number_type == TYPE._1 || number_type == TYPE._5) {
+            if (number_type == POSITION.CENTER_MID || number_type == POSITION.CENTER_BOT) {
                 const winning_top = this.coordinate_matrix.filter((p) => p.y == winning_square.tl.y)
                 Point.multiple_set_position(winning_top, AR.CORNER, AR.SPLIT, AR.CORNER)
             }
-            if (number_type == TYPE._1 || number_type == TYPE._4) {
+            if (number_type == POSITION.CENTER_MID || number_type == POSITION.CENTER_TOP) {
                 const winning_bottom = this.coordinate_matrix.filter((p) => p.y == winning_square.br.y)
                 Point.multiple_set_position(winning_bottom, AR.CORNER, AR.SPLIT, AR.CORNER)
             }
             positions.forEach((position) => chip_placing_fn(this.chips, position, this.coordinate_matrix))
         }
+    }
+    get_payout() {
+        return this.chips.reduce((int, chip) => int + chip.position, 0)
     }
     // tl - top left, br - bottom right
     static generate_matrix(tl, br, n_rows, n_cols) {
@@ -307,28 +259,15 @@ class View {
         const filtered_positions = available_positions.filter((p) => p.position == position)
 
         // sort by how many chips are on a specific position (ascending) and add the first one
-
         chip_array.push(filtered_positions.toSorted((a, b) => a.count(chip_array) -
             b.count(chip_array))[0])
     }
 
 }
-addEventListener('load', (event) => {
-    document.getElementById("next").onclick = handle_next
-
-    const pb_mapping = { 'common_pb': common, 'uncommon_pb': uncommon, 'around_zero_pb': around_zero }
-    for (let key in pb_mapping) {
-        if (key_is_set(key) && sessionStorage.getItem(key) === 'true') {
-            picture_bets = picture_bets.concat(pb_mapping[key])
-        }
-    }
-
-    order = shuffle(Array.from({ length: picture_bets.length }, (_, index) => index))
-    multipliers = shuffle(Array.from({ length: picture_bets.length }, (_, index) => index % 7 + 1))
-
+function set_up() {
     update_counter()
-    const view = new View([AR.SU, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.CORNER, AR.SPLIT, AR.SPLIT, AR.SPLIT], TYPE._4, View.place_flat)
-    view.svg.forEach((svg_element) => {
+
+    state.view.svg.forEach((svg_element) => {
         add_element(document.getElementById("table"),
             "rect",
             null,
@@ -336,9 +275,24 @@ addEventListener('load', (event) => {
             "http://www.w3.org/2000/svg")
     }
     )
-    view.chips.forEach((chip, _, chip_array) =>
+    state.view.chips.forEach((chip, _, chip_array) =>
         add_chip(document.getElementById("table"), chip.x, chip.y, .9, chip.count(chip_array)))
     // populate_table(picture_bets[order[index]].chips, multipliers[index])
-    populate_buttons(picture_bets[order[index]].answer, multipliers[index])
-    start = Date.now()
+    populate_buttons(state.view.get_payout(), 1)
+    state.tick = Date.now()
+}
+function clear() {
+    const table = document.getElementById('table')
+    const buttons = document.getElementById('buttons')
+    remove_children(table, 'rect')
+    remove_children(table, 'circle')
+    remove_children(table, 'text')
+    remove_children(buttons, 'button')
+}
+addEventListener('load', (event) => {
+    document.getElementById("next").onclick = handle_next
+
+    state.views = [new View(picture_bets.get(103, 102), POSITION.CENTER_BOT, View.place_flat),
+    new View(picture_bets.get(43), POSITION.CENTER_MID, View.place_flat)]
+    set_up()
 })
