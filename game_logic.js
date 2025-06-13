@@ -39,6 +39,13 @@ const POSITION = {
     COLUMN_MID: "COLUMN_MID",
     COLUMN_BOT: "COLUMN_BOT"
 }
+const DIRECTION = {
+    UP: "UP",
+    DOWN: "DOWN",
+    LEFT: "LEFT",
+    RIGHT: "RIGHT",
+    TOWARDS_USER: "TOWARDS_USER"
+}
 const picture_bets = {
     pbs: {
         // small
@@ -73,7 +80,6 @@ function add_chip(parent, x, y, radius, multiplier = null) {
 }
 
 function handle_answer(event) {
-    // console.log("handling button:", event)
     if (this.className == "") {
         if (parseInt(this.textContent) == state.view.get_payout()) {
             this.classList.add('correct')
@@ -124,7 +130,6 @@ function populate_buttons(answer, multiplier) {
 }
 function update_counter() {
     const counter = document.getElementById('counter')
-    // TODO: re-implement
     counter.textContent = `${state.index + 1}/${state.views.length}`
 }
 
@@ -151,47 +156,127 @@ class Point {
     }
 }
 class Rectangle {
+    static current_style = ""
+    static set_style(style_str) {
+        Rectangle.current_style = style_str
+    }
+    static clear_style() {
+        Rectangle.current_style = ""
+    }
+    // returns a Rectangle object that overlaps all elements of the array
+    // and has a gradient fill TO `direction` going from transparent to background_color
+    static gradient(direction, array) {
+        // ** GPT 4o generated code start **
+        // Initialize bounding box values
+        let minX = Infinity, minY = Infinity;
+        let maxX = -Infinity, maxY = -Infinity;
+
+        // Find the bounding box that contains all rectangles
+        for (const rect of array) {
+            minX = Math.min(minX, rect.tl.x);
+            minY = Math.min(minY, rect.tl.y);
+            maxX = Math.max(maxX, rect.br.x);
+            maxY = Math.max(maxY, rect.br.y);
+        }
+
+        const toppest_of_left = new Point(minX, minY);
+        const bottomest_of_right = new Point(maxX, maxY);
+        // ** GPT 4o generated code end **
+
+        const previous_style = Rectangle.current_style.substring(0)
+        switch (direction) {
+            case DIRECTION.LEFT:
+                Rectangle.set_style("fill: url(#to_left); stroke: none")
+                break;
+            case DIRECTION.RIGHT:
+                Rectangle.set_style("fill: url(#to_right); stroke: none")
+                break;
+
+            default:
+                console.assert(false, `ERROR: Rectangle.gradient only supports LEFT or RIGHT directions, given ${direction}`)
+                break;
+        }
+
+        const result = new Rectangle(toppest_of_left.x, toppest_of_left.y,
+            Math.abs(bottomest_of_right.x - toppest_of_left.x), Math.abs(bottomest_of_right.y - toppest_of_left.y))
+        Rectangle.set_style(previous_style)
+        return result
+    }
     constructor(x, y, width, height, padding = null) {
         this.x = x
         this.y = y
         this.width = width
         this.height = height
         this.padding = padding
+        this.style = Rectangle.current_style.substring(0)
 
         this.tl = new Point(x, y)
         this.br = new Point(x + width, y + height)
         this.center = new Point(x + width / 2, y + height / 2)
-        this.style = {}
     }
-    ctrl_cv(changes = {}) {
+    ctrl_cv(direction, changes = {}) {
+        let x, y
+        switch (direction) {
+            case DIRECTION.UP:
+                x = this.x
+                y = this.y - this.height
+                break
+            case DIRECTION.DOWN:
+                x = this.x
+                y = this.y + this.height
+                break
+            case DIRECTION.LEFT:
+                x = this.x - this.width
+                y = this.y
+                break
+            case DIRECTION.RIGHT:
+                x = this.x + this.width
+                y = this.y
+                break
+            case DIRECTION.TOWARDS_USER:
+                x = this.x
+                y = this.y
+            default:
+                console.assert(false, "ERROR: unreachable")
+                break
+        }
         return new Rectangle(
-            changes.x !== undefined ? changes.x : this.x,
-            changes.y !== undefined ? changes.y : this.y + this.height,
+            changes.x !== undefined ? changes.x : x,
+            changes.y !== undefined ? changes.y : y,
             changes.width !== undefined ? changes.width : this.width,
             changes.height !== undefined ? changes.height : this.height,
             changes.padding !== undefined ? changes.padding : this.padding
         )
     }
-    set_style(style) {
-        this.style = { style: style }
-        return this
+    // for quickly making `count` Rectangles
+    array(direction, count) {
+        const result = [this]
+        for (let i = 0; i < count - 1; i++) {
+            let last = result[result.length - 1]
+            result.push(last.ctrl_cv(direction))
+        }
+        return result
     }
     display() {
         return Object.assign({
             x: this.x + (this.padding ? this.padding : 0),
             y: this.y + (this.padding ? this.padding : 0),
             width: this.width - (this.padding ? 2 * this.padding : 0),
-            height: this.height - (this.padding ? 2 * this.padding : 0)
-        }, this.style)
+            height: this.height - (this.padding ? 2 * this.padding : 0),
+        }, this.style ? { style: this.style } : {})
     }
 }
 class View {
     constructor(positions, number_type, chip_placing_fn) {
-        const background = new Rectangle(5.75, -.25, 4.5, 16.5).set_style("fill: black")
-        const header = new Rectangle(6, 0, 4, 1, .25)
-        const top = header.ctrl_cv({ height: 5 }).set_style("fill: red")
-        const middle = top.ctrl_cv().set_style("fill: orange")
-        const bottom = middle.ctrl_cv().set_style("fill: green")
+        Rectangle.set_style("fill: tan")
+        const background = new Rectangle(2, .5, 12, 15.5, -.5)
+        Rectangle.set_style("fill: wheat")
+        const header = new Rectangle(2, .4, 12, .6, .15)
+
+        const top = header.ctrl_cv(DIRECTION.DOWN, { x: 6, y: 1, width: 4, height: 5 })
+        const middle = top.ctrl_cv(DIRECTION.DOWN)
+        const bottom = middle.ctrl_cv(DIRECTION.DOWN)
+
         const base_svg = [background, header, top, middle, bottom]
         const winning_square = {
             [POSITION.ZERO_TOP]: top,
@@ -214,7 +299,12 @@ class View {
 
         this.chips = []
         if ([POSITION.CENTER_TOP, POSITION.CENTER_MID, POSITION.CENTER_BOT].includes(number_type)) {
-            this.svg = base_svg
+            const left_filler = top.ctrl_cv(DIRECTION.LEFT).array(DIRECTION.DOWN, 3)
+            const right_filler = top.ctrl_cv(DIRECTION.RIGHT).array(DIRECTION.DOWN, 3)
+            this.svg = base_svg.concat(left_filler, right_filler,
+                // TODO: revisit focus guiding another time
+                [Rectangle.gradient(DIRECTION.LEFT, left_filler), Rectangle.gradient(DIRECTION.RIGHT, right_filler)]
+            )
 
             // top row is always SIXL, STREET, SIXL
             const top_row = this.coordinate_matrix.filter((p) => p.y == top.tl.y)
@@ -267,17 +357,16 @@ class View {
 function set_up() {
     update_counter()
 
-    state.view.svg.forEach((svg_element) => {
+    state.view.svg.forEach((svg_element) =>
         add_element(document.getElementById("table"),
             "rect",
             null,
             svg_element.display(),
             "http://www.w3.org/2000/svg")
-    }
     )
+
     state.view.chips.forEach((chip, _, chip_array) =>
         add_chip(document.getElementById("table"), chip.x, chip.y, .9, chip.count(chip_array)))
-    // populate_table(picture_bets[order[index]].chips, multipliers[index])
     populate_buttons(state.view.get_payout(), 1)
     state.tick = Date.now()
 }
