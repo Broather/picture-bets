@@ -76,7 +76,10 @@ button:hover {
 
 text {
     fill: white;
-    font-size: .7px;
+    font-weight: bold;
+    stroke: black;
+    stroke-width: .01px;
+    font-size: 1px;
 }
 
 .correct {

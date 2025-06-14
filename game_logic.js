@@ -73,8 +73,8 @@ function add_chip(parent, x, y, radius, multiplier = null) {
     if (multiplier != null) {
         add_element(parent,
             'text',
-            `x${multiplier}`,
-            { x: x - radius / 2, y: y + radius / 4 },
+            `${multiplier}`,
+            { x: x - radius / 4, y: y + radius / 3 },
             'http://www.w3.org/2000/svg')
     }
 }
