@@ -378,10 +378,5 @@ function clear() {
     remove_children(table, 'text')
     remove_children(buttons, 'button')
 }
-addEventListener('load', (event) => {
-    document.getElementById("next").onclick = handle_next
 
-    state.views = [new View(picture_bets.get(103, 102), POSITION.CENTER_BOT, View.place_flat),
-    new View(picture_bets.get(43), POSITION.CENTER_MID, View.place_flat)]
-    set_up()
-})
+export { AR, POSITION, View, state, picture_bets, set_up, handle_next }
