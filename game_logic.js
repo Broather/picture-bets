@@ -1,4 +1,4 @@
-import { add_element, remove_children } from "./utility.js"
+import { add_element, remove_children, contains_alphanum } from "./utility.js"
 
 const state = {
     index: 0,
@@ -48,6 +48,8 @@ const DIRECTION = {
 }
 const picture_bets = {
     pbs: {
+        // single
+        "5": [AR.SIXL],
         // small
         "43": [AR.SU, AR.CORNER],
         // medium
@@ -74,7 +76,7 @@ function add_chip(parent, x, y, radius, multiplier = null) {
         add_element(parent,
             'text',
             `${multiplier}`,
-            { x: x, y: y, class: "chip-number" },
+            { class: "chip", x: x, y: y },
             'http://www.w3.org/2000/svg')
     }
 }
@@ -171,30 +173,27 @@ class Rectangle {
         this.center = new Point(x + width / 2, y + height / 2)
     }
     ctrl_cv(direction, changes = {}) {
-        function is_parseable(n) {
-            return parseInt(n) != NaN
-        }
         let x, y, number
         switch (direction) {
             case DIRECTION.UP:
                 x = this.x
                 y = this.y - this.height
-                number = this.number - 1 || this.number
+                number = !contains_alphanum(this.number) ? parseInt(this.number - 1) : this.number
                 break
             case DIRECTION.DOWN:
                 x = this.x
                 y = this.y + this.height
-                number = this.number + 1 || this.number
+                number = !contains_alphanum(this.number) ? parseInt(this.number + 1) : this.number
                 break
             case DIRECTION.LEFT:
                 x = this.x - this.width
                 y = this.y
-                number = this.number + 3 || this.number
+                number = !contains_alphanum(this.number) ? parseInt(this.number + 3) : this.number
                 break
             case DIRECTION.RIGHT:
                 x = this.x + this.width
                 y = this.y
-                number = this.number - 3 || this.number
+                number = !contains_alphanum(this.number) ? parseInt(this.number - 3) : this.number
                 break
             case DIRECTION.TOWARDS_USER:
                 x = this.x
@@ -244,7 +243,7 @@ class Rectangle {
             }
         }
         return {
-            class: "layout-number",
+            class: contains_alphanum(this.number) ? "column" : "layout",
             x: this.center.x,
             y: this.center.y,
             "transform": `rotate(90, ${this.center.x}, ${this.center.y})`,
@@ -348,9 +347,9 @@ class View {
         this.base_coordinate_matrix = View.generate_matrix(top.tl, bottom.br, 7, 3)
 
         function is_within_winning_square(point) { return winning_square.tl.y <= point.y && point.y <= winning_square.br.y }
-        function not_at_bottom_row(point) { return point.y != bottom.br.y }
+        function not_on_bottom_row(point) { return point.y != bottom.br.y }
         this.coordinate_matrix = this.base_coordinate_matrix.filter((point) => point.y == top.tl.y ||
-            is_within_winning_square(point) && not_at_bottom_row(point))
+            is_within_winning_square(point) && not_on_bottom_row(point))
 
         this.chips = []
         if ([POSITION.CENTER_TOP, POSITION.CENTER_MID, POSITION.CENTER_BOT].includes(number_type)) {
@@ -376,8 +375,31 @@ class View {
                 const winning_bottom = this.coordinate_matrix.filter((p) => p.y == winning_square.br.y)
                 Point.multiple_set_position(winning_bottom, AR.CORNER, AR.SPLIT, AR.CORNER)
             }
-            positions.forEach((position) => chip_placing_fn(this.chips, position, this.coordinate_matrix))
+
+        } else if ([POSITION.COLUMN_TOP, POSITION.COLUMN_MID, POSITION.COLUMN_BOT].includes(number_type)) {
+            const left_filler = top.ctrl_cv(DIRECTION.LEFT, { number: "2to1" }).array(DIRECTION.DOWN, 3)
+            const right_filler = top.ctrl_cv(DIRECTION.RIGHT).array(DIRECTION.DOWN, 3)
+            this.rectangles = base_rectangles.concat(left_filler, right_filler)
+
+            function not_on_column_area(point) { return point.x != top.tl.x }
+            this.coordinate_matrix = this.coordinate_matrix.filter((point) => not_on_column_area(point))
+
+            const top_row = this.coordinate_matrix.filter((p) => p.y == top.tl.y)
+            Point.multiple_set_position(top_row, AR.STREET, AR.SIXL)
+
+            const winning_middle = this.coordinate_matrix.filter((p) => p.y == winning_square.center.y)
+            Point.multiple_set_position(winning_middle, AR.SU, AR.SPLIT)
+
+            if (number_type == POSITION.COLUMN_MID || number_type == POSITION.COLUMN_BOT) {
+                const winning_top = this.coordinate_matrix.filter((p) => p.y == winning_square.tl.y)
+                Point.multiple_set_position(winning_top, AR.SPLIT, AR.CORNER)
+            }
+            if (number_type == POSITION.COLUMN_MID || number_type == POSITION.COLUMN_TOP) {
+                const winning_bottom = this.coordinate_matrix.filter((p) => p.y == winning_square.br.y)
+                Point.multiple_set_position(winning_bottom, AR.SPLIT, AR.CORNER)
+            }
         }
+        positions.forEach((position) => chip_placing_fn(this.chips, position, this.coordinate_matrix))
     }
     get_payout() {
         return this.chips.reduce((int, chip) => int + chip.position, 0)
@@ -431,6 +453,8 @@ function set_up() {
 
     state.view.chips.forEach((chip, _, chip_array) =>
         add_chip(document.getElementById("table"), chip.x, chip.y, .9, chip.count(chip_array)))
+    // state.view.coordinate_matrix.forEach((chip, _, chip_array) =>
+    //     add_chip(document.getElementById("table"), chip.x, chip.y, .9, chip.position))
     populate_buttons(state.view.get_payout(), 1)
     state.tick = Date.now()
 }

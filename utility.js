@@ -20,3 +20,13 @@ export function remove_children(parent, type) {
     const children = parent.querySelectorAll(type);
     children.forEach(child => parent.removeChild(child));
 }
+
+export function contains_alphanum(n) {
+    const str_n = String(n)
+    for (let i = 0; i < str_n.length; i++) {
+        const code = str_n.charCodeAt(i)
+        if ((code > 64 && code < 91) || // upper alpha (A-Z)
+            (code > 96 && code < 123) // lower alpha (a-z)
+        ) return true
+    } return false
+}

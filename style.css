@@ -79,7 +79,7 @@ text {
     dominant-baseline: central;
 }
 
-text.chip-number {
+text.chip {
     fill: white;
     font-weight: bold;
     stroke: black;
@@ -88,10 +88,16 @@ text.chip-number {
 
 }
 
-text.layout-number {
+text.layout {
     font-style: italic;
     font-weight: bold;
     font-size: 3px;
+
+}
+
+text.column {
+    font-weight: bold;
+    font-size: 2px;
 
 }
 

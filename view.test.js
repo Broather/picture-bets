@@ -15,7 +15,7 @@ describe("coordinate matrix sum", () => {
         [POSITION.COLUMN_BOT]: 93
     }
     for (let key in test_cases) {
-        it("should return the correct sum value based on position", () => {
+        it(`view with position ${key} should return ${test_cases[key]} which is the sum of all available positions`, () => {
             // Arrange
             const view = new View([AR.SU], key, View.place_flat)
             // Act
