@@ -75,11 +75,24 @@ button:hover {
 
 
 text {
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+
+text.chip-number {
     fill: white;
     font-weight: bold;
     stroke: black;
     stroke-width: .01px;
     font-size: 1px;
+
+}
+
+text.layout-number {
+    font-style: italic;
+    font-weight: bold;
+    font-size: 3px;
+
 }
 
 .correct {

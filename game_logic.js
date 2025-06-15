@@ -74,7 +74,7 @@ function add_chip(parent, x, y, radius, multiplier = null) {
         add_element(parent,
             'text',
             `${multiplier}`,
-            { x: x - radius / 4, y: y + radius / 3 },
+            { x: x, y: y, class: "chip-number" },
             'http://www.w3.org/2000/svg')
     }
 }
@@ -156,12 +156,113 @@ class Point {
     }
 }
 class Rectangle {
-    static current_style = ""
-    static set_style(style_str) {
-        Rectangle.current_style = style_str
+    // NOTE: null + 1 == 1, so default number should be NaN 
+    constructor(x, y, width, height, number = NaN) {
+        this.x = x
+        this.y = y
+        this.width = width
+        this.height = height
+        this.number = number
+        this.padding = Rectangle.current_style.padding
+        this.style = Rectangle.current_style.style.substring(0)
+
+        this.tl = new Point(x, y)
+        this.br = new Point(x + width, y + height)
+        this.center = new Point(x + width / 2, y + height / 2)
     }
-    static clear_style() {
-        Rectangle.current_style = ""
+    ctrl_cv(direction, changes = {}) {
+        function is_parseable(n) {
+            return parseInt(n) != NaN
+        }
+        let x, y, number
+        switch (direction) {
+            case DIRECTION.UP:
+                x = this.x
+                y = this.y - this.height
+                number = this.number - 1 || this.number
+                break
+            case DIRECTION.DOWN:
+                x = this.x
+                y = this.y + this.height
+                number = this.number + 1 || this.number
+                break
+            case DIRECTION.LEFT:
+                x = this.x - this.width
+                y = this.y
+                number = this.number + 3 || this.number
+                break
+            case DIRECTION.RIGHT:
+                x = this.x + this.width
+                y = this.y
+                number = this.number - 3 || this.number
+                break
+            case DIRECTION.TOWARDS_USER:
+                x = this.x
+                y = this.y
+                number = this.number
+            default:
+                console.assert(false, "ERROR: unreachable")
+                break
+        }
+        return new Rectangle(
+            changes.x !== undefined ? changes.x : x,
+            changes.y !== undefined ? changes.y : y,
+            changes.width !== undefined ? changes.width : this.width,
+            changes.height !== undefined ? changes.height : this.height,
+            changes.number !== undefined ? changes.number : number,
+        )
+    }
+    // for quickly making `count` Rectangles
+    array(direction, count) {
+        const result = [this]
+        for (let i = 0; i < count - 1; i++) {
+            let last = result[result.length - 1]
+            result.push(last.ctrl_cv(direction))
+        }
+        return result
+    }
+    to_svg_rect() {
+        return Object.assign({
+            x: this.x + (this.padding ? this.padding : 0),
+            y: this.y + (this.padding ? this.padding : 0),
+            width: this.width - (this.padding ? 2 * this.padding : 0),
+            height: this.height - (this.padding ? 2 * this.padding : 0),
+        }, this.style ? { style: this.style } : {})
+    }
+    to_svg_text() {
+        const roulette_number_order = [32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26]
+        // TODO: define missing texture repeating pattern and use url of that
+        let color = "purple"
+        const parsed_number = parseInt(this.number)
+        if (parsed_number == 0) {
+            color = "green"
+        } else if (roulette_number_order.includes(parsed_number)) {
+            if (roulette_number_order.indexOf(parsed_number) % 2 == 0) {
+                color = "red"
+            } else {
+                color = "black"
+            }
+        }
+        return {
+            class: "layout-number",
+            x: this.center.x,
+            y: this.center.y,
+            "transform": `rotate(90, ${this.center.x}, ${this.center.y})`,
+            fill: color
+        }
+    }
+    static current_style = { style: "", padding: 0 }
+    static set_style(style_str) {
+        Rectangle.current_style.style = style_str
+    }
+    static set_padding(padding) {
+        Rectangle.current_style.padding = padding
+    }
+    static reset_style() {
+        Rectangle.current_style.style = ""
+    }
+    static reset_padding() {
+        Rectangle.current_style.padding = 0
     }
     // returns a Rectangle object that overlaps all elements of the array
     // and has a gradient fill TO `direction` going from transparent to background_color
@@ -183,7 +284,7 @@ class Rectangle {
         const bottomest_of_right = new Point(maxX, maxY);
         // ** GPT 4o generated code end **
 
-        const previous_style = Rectangle.current_style.substring(0)
+        const previous_style = Rectangle.current_style.style.substring(0)
         switch (direction) {
             case DIRECTION.LEFT:
                 Rectangle.set_style("fill: url(#to_left); stroke: none")
@@ -202,82 +303,36 @@ class Rectangle {
         Rectangle.set_style(previous_style)
         return result
     }
-    constructor(x, y, width, height, padding = null) {
-        this.x = x
-        this.y = y
-        this.width = width
-        this.height = height
-        this.padding = padding
-        this.style = Rectangle.current_style.substring(0)
-
-        this.tl = new Point(x, y)
-        this.br = new Point(x + width, y + height)
-        this.center = new Point(x + width / 2, y + height / 2)
-    }
-    ctrl_cv(direction, changes = {}) {
-        let x, y
-        switch (direction) {
-            case DIRECTION.UP:
-                x = this.x
-                y = this.y - this.height
-                break
-            case DIRECTION.DOWN:
-                x = this.x
-                y = this.y + this.height
-                break
-            case DIRECTION.LEFT:
-                x = this.x - this.width
-                y = this.y
-                break
-            case DIRECTION.RIGHT:
-                x = this.x + this.width
-                y = this.y
-                break
-            case DIRECTION.TOWARDS_USER:
-                x = this.x
-                y = this.y
-            default:
-                console.assert(false, "ERROR: unreachable")
-                break
-        }
-        return new Rectangle(
-            changes.x !== undefined ? changes.x : x,
-            changes.y !== undefined ? changes.y : y,
-            changes.width !== undefined ? changes.width : this.width,
-            changes.height !== undefined ? changes.height : this.height,
-            changes.padding !== undefined ? changes.padding : this.padding
-        )
-    }
-    // for quickly making `count` Rectangles
-    array(direction, count) {
-        const result = [this]
-        for (let i = 0; i < count - 1; i++) {
-            let last = result[result.length - 1]
-            result.push(last.ctrl_cv(direction))
-        }
-        return result
-    }
-    display() {
-        return Object.assign({
-            x: this.x + (this.padding ? this.padding : 0),
-            y: this.y + (this.padding ? this.padding : 0),
-            width: this.width - (this.padding ? 2 * this.padding : 0),
-            height: this.height - (this.padding ? 2 * this.padding : 0),
-        }, this.style ? { style: this.style } : {})
-    }
 }
 class View {
     constructor(positions, number_type, chip_placing_fn) {
         Rectangle.set_style("fill: tan")
-        const background = new Rectangle(2, .5, 12, 15.5, -.5)
+        Rectangle.set_padding(-.5)
+        const background = new Rectangle(2, .5, 12, 15.5)
         Rectangle.set_style("fill: wheat")
-        const header = new Rectangle(2, .4, 12, .6, .15)
+        Rectangle.set_padding(.15)
+        const header = new Rectangle(2, .4, 12, .6)
 
-        const top = header.ctrl_cv(DIRECTION.DOWN, { x: 6, y: 1, width: 4, height: 5 })
+        // TODO: identify which row (top, mid, bot) and which column (column, center, zero) a position belongs to
+        const top_number = {
+            [POSITION.ZERO_TOP]: 1,
+            [POSITION.ZERO_MID]: 1,
+            [POSITION.ZERO_BOT]: 1,
+            // TODO: randomply pick value from range(from: 4, to: 31+1, step: 3)
+            [POSITION.CENTER_TOP]: 10,
+            // TODO: randomply pick value from range(from: 4, to: 31+1, step: 3)
+            [POSITION.CENTER_MID]: 10,
+            // TODO: randomply pick value from range(from: 4, to: 31+1, step: 3)
+            [POSITION.CENTER_BOT]: 10,
+            [POSITION.COLUMN_TOP]: 34,
+            [POSITION.COLUMN_MID]: 34,
+            [POSITION.COLUMN_BOT]: 34
+        }[number_type]
+        const top = header.ctrl_cv(DIRECTION.DOWN, { x: 6, y: 1, width: 4, height: 5, number: top_number })
         const middle = top.ctrl_cv(DIRECTION.DOWN)
         const bottom = middle.ctrl_cv(DIRECTION.DOWN)
 
-        const base_svg = [background, header, top, middle, bottom]
+        const base_rectangles = [background, header, top, middle, bottom]
         const winning_square = {
             [POSITION.ZERO_TOP]: top,
             [POSITION.ZERO_MID]: middle,
@@ -301,9 +356,9 @@ class View {
         if ([POSITION.CENTER_TOP, POSITION.CENTER_MID, POSITION.CENTER_BOT].includes(number_type)) {
             const left_filler = top.ctrl_cv(DIRECTION.LEFT).array(DIRECTION.DOWN, 3)
             const right_filler = top.ctrl_cv(DIRECTION.RIGHT).array(DIRECTION.DOWN, 3)
-            this.svg = base_svg.concat(left_filler, right_filler,
+            this.rectangles = base_rectangles.concat(left_filler, right_filler,
                 // TODO: revisit focus guiding another time
-                [Rectangle.gradient(DIRECTION.LEFT, left_filler), Rectangle.gradient(DIRECTION.RIGHT, right_filler)]
+                // [Rectangle.gradient(DIRECTION.LEFT, left_filler), Rectangle.gradient(DIRECTION.RIGHT, right_filler)]
             )
 
             // top row is always SIXL, STREET, SIXL
@@ -346,23 +401,32 @@ class View {
         return points;
     }
     static place_flat(chip_array, position, available_positions) {
-        const filtered_positions = available_positions.filter((p) => p.position == position)
+        const same_type_positions = available_positions.filter((p) => p.position == position)
 
         // sort by how many chips are on a specific position (ascending) and add the first one
-        chip_array.push(filtered_positions.toSorted((a, b) => a.count(chip_array) -
+        chip_array.push(same_type_positions.toSorted((a, b) => a.count(chip_array) -
             b.count(chip_array))[0])
     }
 
 }
 function set_up() {
+    const table = document.getElementById("table")
     update_counter()
 
-    state.view.svg.forEach((svg_element) =>
-        add_element(document.getElementById("table"),
+    state.view.rectangles.forEach((rectangle) => {
+        add_element(table,
             "rect",
             null,
-            svg_element.display(),
+            rectangle.to_svg_rect(),
             "http://www.w3.org/2000/svg")
+        if (rectangle.number) {
+            add_element(table,
+                "text",
+                rectangle.number,
+                rectangle.to_svg_text(),
+                "http://www.w3.org/2000/svg")
+        }
+    }
     )
 
     state.view.chips.forEach((chip, _, chip_array) =>
