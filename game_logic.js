@@ -54,7 +54,9 @@ const picture_bets = {
         "43": [AR.SU, AR.CORNER],
         // medium
         "103": [AR.SU, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.SPLIT],
-        "102": [AR.SU, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.CORNER, AR.CORNER]
+        "102": [AR.SU, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.CORNER, AR.CORNER],
+        // large
+        "165": [AR.SU, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.STREET, AR.STREET, AR.STREET, AR.CORNER, AR.CORNER, AR.CORNER, AR.SIXL]
     },
     get(...keys) {
         return keys.flatMap((key) => this.pbs[key] || [])
@@ -158,8 +160,7 @@ class Point {
     }
 }
 class Rectangle {
-    // NOTE: null + 1 == 1, so default number should be NaN 
-    constructor(x, y, width, height, number = NaN) {
+    constructor(x, y, width, height, number = null) {
         this.x = x
         this.y = y
         this.width = width
@@ -263,16 +264,32 @@ class Rectangle {
     static reset_padding() {
         Rectangle.current_style.padding = 0
     }
-    // returns a Rectangle object that overlaps all elements of the array
-    // and has a gradient fill TO `direction` going from transparent to background_color
-    static gradient(direction, array) {
+    // modifies `zero_rectangle`s to_svg_rect function to have the parameters of a polygon type element
+    static create_zero_area(zero_rectangle) {
+        const point_pairs = [
+            `${zero_rectangle.tl.x + zero_rectangle.padding},${zero_rectangle.tl.y - zero_rectangle.height + zero_rectangle.padding}`,
+            `${zero_rectangle.center.x - zero_rectangle.padding},${zero_rectangle.tl.y - zero_rectangle.height + zero_rectangle.padding}`,
+            `${zero_rectangle.br.x - zero_rectangle.padding},${zero_rectangle.center.y}`,
+            `${zero_rectangle.center.x - zero_rectangle.padding},${zero_rectangle.br.y + zero_rectangle.height - zero_rectangle.padding}`,
+            `${zero_rectangle.tl.x + zero_rectangle.padding},${zero_rectangle.br.y + zero_rectangle.height - zero_rectangle.padding}`,
+        ]
+        zero_rectangle.to_svg_rect = () => {
+            return Object.assign({
+                points: point_pairs.join(" ")
+            }, zero_rectangle.style ? { style: zero_rectangle.style } : {})
+        }
+        return zero_rectangle
+    }
+    // returns a Rectangle object that overlaps all `rectangles`
+    // and has a gradient to `direction` going from transparent to background_color
+    static create_gradient(direction, rectangles) {
         // ** GPT 4o generated code start **
         // Initialize bounding box values
         let minX = Infinity, minY = Infinity;
         let maxX = -Infinity, maxY = -Infinity;
 
         // Find the bounding box that contains all rectangles
-        for (const rect of array) {
+        for (const rect of rectangles) {
             minX = Math.min(minX, rect.tl.x);
             minY = Math.min(minY, rect.tl.y);
             maxX = Math.max(maxX, rect.br.x);
@@ -357,7 +374,7 @@ class View {
             const right_filler = top.ctrl_cv(DIRECTION.RIGHT).array(DIRECTION.DOWN, 3)
             this.rectangles = base_rectangles.concat(left_filler, right_filler,
                 // TODO: revisit focus guiding another time
-                // [Rectangle.gradient(DIRECTION.LEFT, left_filler), Rectangle.gradient(DIRECTION.RIGHT, right_filler)]
+                // [Rectangle.create_gradient(DIRECTION.LEFT, left_filler), Rectangle.create_gradient(DIRECTION.RIGHT, right_filler)]
             )
 
             // top row is always SIXL, STREET, SIXL
@@ -398,6 +415,26 @@ class View {
                 const winning_bottom = this.coordinate_matrix.filter((p) => p.y == winning_square.br.y)
                 Point.multiple_set_position(winning_bottom, AR.SPLIT, AR.CORNER)
             }
+        } else if ([POSITION.ZERO_TOP, POSITION.ZERO_MID, POSITION.ZERO_BOT].includes(number_type)) {
+            const left_filler = top.ctrl_cv(DIRECTION.LEFT).array(DIRECTION.DOWN, 3)
+            const right_filler = Rectangle.create_zero_area(middle.ctrl_cv(DIRECTION.RIGHT, { number: 0 }))
+            this.rectangles = base_rectangles.concat(right_filler, left_filler)
+
+            const top_row = this.coordinate_matrix.filter((p) => p.y == top.tl.y)
+            Point.multiple_set_position(top_row, AR.SIXL, AR.STREET, AR.CORNER)
+
+            const winning_middle = this.coordinate_matrix.filter((p) => p.y == winning_square.center.y)
+            Point.multiple_set_position(winning_middle, AR.SPLIT, AR.SU, AR.SPLIT)
+
+            if (number_type == POSITION.ZERO_MID || number_type == POSITION.ZERO_BOT) {
+                const winning_top = this.coordinate_matrix.filter((p) => p.y == winning_square.tl.y)
+                Point.multiple_set_position(winning_top, AR.CORNER, AR.SPLIT, AR.STREET)
+            }
+            if (number_type == POSITION.ZERO_MID || number_type == POSITION.ZERO_TOP) {
+                const winning_bottom = this.coordinate_matrix.filter((p) => p.y == winning_square.br.y)
+                Point.multiple_set_position(winning_bottom, AR.CORNER, AR.SPLIT, AR.STREET)
+            }
+
         }
         positions.forEach((position) => chip_placing_fn(this.chips, position, this.coordinate_matrix))
     }
@@ -437,11 +474,11 @@ function set_up() {
 
     state.view.rectangles.forEach((rectangle) => {
         add_element(table,
-            "rect",
+            rectangle.number == 0 ? "polygon" : "rect",
             null,
             rectangle.to_svg_rect(),
             "http://www.w3.org/2000/svg")
-        if (rectangle.number) {
+        if (rectangle.number != null) {
             add_element(table,
                 "text",
                 rectangle.number,
