@@ -273,6 +273,9 @@ class Rectangle {
             `${zero_rectangle.center.x - zero_rectangle.padding},${zero_rectangle.br.y + zero_rectangle.height - zero_rectangle.padding}`,
             `${zero_rectangle.tl.x + zero_rectangle.padding},${zero_rectangle.br.y + zero_rectangle.height - zero_rectangle.padding}`,
         ]
+        zero_rectangle.tl = new Point(zero_rectangle.tl.x, zero_rectangle.tl.y - zero_rectangle.height)
+        zero_rectangle.br = new Point(zero_rectangle.br.x, zero_rectangle.br.y + zero_rectangle.height)
+
         zero_rectangle.to_svg_rect = () => {
             return Object.assign({
                 points: point_pairs.join(" ")
@@ -331,6 +334,7 @@ class View {
 
         // TODO: identify which row (top, mid, bot) and which column (column, center, zero) a position belongs to
         const top_number = {
+            [POSITION.ZERO]: 1,
             [POSITION.ZERO_TOP]: 1,
             [POSITION.ZERO_MID]: 1,
             [POSITION.ZERO_BOT]: 1,
@@ -347,9 +351,11 @@ class View {
         const top = header.ctrl_cv(DIRECTION.DOWN, { x: 6, y: 1, width: 4, height: 5, number: top_number })
         const middle = top.ctrl_cv(DIRECTION.DOWN)
         const bottom = middle.ctrl_cv(DIRECTION.DOWN)
+        const zero = Rectangle.create_zero_area(middle.ctrl_cv(DIRECTION.RIGHT, { number: 0 }))
 
         const base_rectangles = [background, header, top, middle, bottom]
         const winning_square = {
+            [POSITION.ZERO]: zero,
             [POSITION.ZERO_TOP]: top,
             [POSITION.ZERO_MID]: middle,
             [POSITION.ZERO_BOT]: bottom,
@@ -361,7 +367,8 @@ class View {
             [POSITION.COLUMN_BOT]: bottom
         }[number_type]
 
-        this.base_coordinate_matrix = View.generate_matrix(top.tl, bottom.br, 7, 3)
+        this.base_coordinate_matrix = number_type == POSITION.ZERO ?
+            View.generate_matrix(zero.tl, zero.br, 7, 3) : View.generate_matrix(top.tl, bottom.br, 7, 3)
 
         function is_within_winning_square(point) { return winning_square.tl.y <= point.y && point.y <= winning_square.br.y }
         function not_on_bottom_row(point) { return point.y != bottom.br.y }
@@ -398,6 +405,7 @@ class View {
             const right_filler = top.ctrl_cv(DIRECTION.RIGHT).array(DIRECTION.DOWN, 3)
             this.rectangles = base_rectangles.concat(left_filler, right_filler)
 
+            // extra filtering
             function not_on_column_area(point) { return point.x != top.tl.x }
             this.coordinate_matrix = this.coordinate_matrix.filter((point) => not_on_column_area(point))
 
@@ -415,24 +423,37 @@ class View {
                 const winning_bottom = this.coordinate_matrix.filter((p) => p.y == winning_square.br.y)
                 Point.multiple_set_position(winning_bottom, AR.SPLIT, AR.CORNER)
             }
-        } else if ([POSITION.ZERO_TOP, POSITION.ZERO_MID, POSITION.ZERO_BOT].includes(number_type)) {
+        } else if ([POSITION.ZERO_TOP, POSITION.ZERO_MID, POSITION.ZERO_BOT, POSITION.ZERO].includes(number_type)) {
             const left_filler = top.ctrl_cv(DIRECTION.LEFT).array(DIRECTION.DOWN, 3)
-            const right_filler = Rectangle.create_zero_area(middle.ctrl_cv(DIRECTION.RIGHT, { number: 0 }))
+            const right_filler = zero
             this.rectangles = base_rectangles.concat(right_filler, left_filler)
 
-            const top_row = this.coordinate_matrix.filter((p) => p.y == top.tl.y)
-            Point.multiple_set_position(top_row, AR.SIXL, AR.STREET, AR.CORNER)
+            if (number_type == POSITION.ZERO) {
+                // extra filtering
+                this.coordinate_matrix = this.coordinate_matrix.filter((p) => p.x == zero.tl.x ||
+                    p.x == zero.center.x && p.y == zero.center.y)
 
-            const winning_middle = this.coordinate_matrix.filter((p) => p.y == winning_square.center.y)
-            Point.multiple_set_position(winning_middle, AR.SPLIT, AR.SU, AR.SPLIT)
+                const first_column = this.coordinate_matrix.filter((p) => p.x == zero.tl.x)
+                Point.multiple_set_position(first_column, AR.CORNER, AR.SPLIT, AR.STREET, AR.SPLIT, AR.STREET, AR.SPLIT)
 
-            if (number_type == POSITION.ZERO_MID || number_type == POSITION.ZERO_BOT) {
-                const winning_top = this.coordinate_matrix.filter((p) => p.y == winning_square.tl.y)
-                Point.multiple_set_position(winning_top, AR.CORNER, AR.SPLIT, AR.STREET)
-            }
-            if (number_type == POSITION.ZERO_MID || number_type == POSITION.ZERO_TOP) {
-                const winning_bottom = this.coordinate_matrix.filter((p) => p.y == winning_square.br.y)
-                Point.multiple_set_position(winning_bottom, AR.CORNER, AR.SPLIT, AR.STREET)
+                const zero_su = this.coordinate_matrix.find((p) => p.x == zero.center.x && p.y == zero.center.y)
+                zero_su.set_position(AR.SU)
+
+            } else {
+                const top_row = this.coordinate_matrix.filter((p) => p.y == top.tl.y)
+                Point.multiple_set_position(top_row, AR.SIXL, AR.STREET, AR.CORNER)
+
+                const winning_middle = this.coordinate_matrix.filter((p) => p.y == winning_square.center.y)
+                Point.multiple_set_position(winning_middle, AR.SPLIT, AR.SU, AR.SPLIT)
+
+                if (number_type == POSITION.ZERO_MID || number_type == POSITION.ZERO_BOT) {
+                    const winning_top = this.coordinate_matrix.filter((p) => p.y == winning_square.tl.y)
+                    Point.multiple_set_position(winning_top, AR.CORNER, AR.SPLIT, AR.STREET)
+                }
+                if (number_type == POSITION.ZERO_MID || number_type == POSITION.ZERO_TOP) {
+                    const winning_bottom = this.coordinate_matrix.filter((p) => p.y == winning_square.br.y)
+                    Point.multiple_set_position(winning_bottom, AR.CORNER, AR.SPLIT, AR.STREET)
+                }
             }
 
         }
@@ -461,6 +482,7 @@ class View {
     }
     static place_flat(chip_array, position, available_positions) {
         const same_type_positions = available_positions.filter((p) => p.position == position)
+        console.assert(same_type_positions.length > 0, `ERROR in place_flat: trying to place position of payout value of ${position} \nMight be trying to place sixline on Zero`)
 
         // sort by how many chips are on a specific position (ascending) and add the first one
         chip_array.push(same_type_positions.toSorted((a, b) => a.count(chip_array) -
