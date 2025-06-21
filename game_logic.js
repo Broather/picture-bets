@@ -50,8 +50,10 @@ const picture_bets = {
     pbs: {
         // single
         "5": [AR.SIXL],
+        "11": [AR.STREET],
         // small
         "43": [AR.SU, AR.CORNER],
+        "69": [AR.SU, AR.SPLIT, AR.SPLIT],
         // medium
         "103": [AR.SU, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.SPLIT],
         "102": [AR.SU, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.CORNER, AR.CORNER],
@@ -84,13 +86,17 @@ function add_chip(parent, x, y, radius, multiplier = null) {
 }
 
 function handle_answer(event) {
-    if (this.className == "") {
+    function any_button_has(_class) {
+        return Array.from(document.getElementById("buttons").children).some((c) => c.className.trim() == _class)
+    }
+    if (!any_button_has("correct")) {
         if (parseInt(this.textContent) == state.view.get_payout()) {
             this.classList.add('correct')
             document.getElementById('next').removeAttribute('hidden')
         } else {
+            if (!any_button_has("incorrect")) { state.mistakes++ }
+
             this.classList.add('incorrect')
-            state.mistakes++
         }
     }
 }
@@ -523,6 +529,7 @@ function clear() {
     remove_children(table, 'rect')
     remove_children(table, 'circle')
     remove_children(table, 'text')
+    remove_children(table, 'polygon')
     remove_children(buttons, 'button')
 }
 
