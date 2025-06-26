@@ -39,21 +39,12 @@
     </body>
 
     <script type="module">
-        import { state, picture_bets, POSITION, View, set_up, handle_next } from "./game_logic.js"
+        import { state, View, set_up, handle_next } from "./game_logic.js"
 
         addEventListener('load', (event) => {
             document.getElementById("next").onclick = handle_next
 
-            state.views = [
-                new View(picture_bets.get(102, 103), POSITION.CENTER_MID, View.place_flat),
-                new View(picture_bets.get(102, 103), POSITION.CENTER_BOT, View.place_flat),
-                new View(picture_bets.get(102, 103), POSITION.CENTER_TOP, View.place_flat),
-                new View(picture_bets.get(69, 11, 5, 5), POSITION.ZERO_MID, View.place_flat),
-                new View(picture_bets.get(69, 11), POSITION.ZERO, View.place_flat),
-                new View(picture_bets.get(102, 103), POSITION.COLUMN_MID, View.place_flat),
-                new View(picture_bets.get(102, 103), POSITION.COLUMN_BOT, View.place_flat),
-                new View(picture_bets.get(102, 103), POSITION.COLUMN_TOP, View.place_flat),
-            ]
+            state.views = [...View.generate_views(5, 1), ...View.generate_views(5, 2)]
             set_up()
         })
 

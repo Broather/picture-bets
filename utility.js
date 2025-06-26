@@ -1,3 +1,29 @@
+export class Random {
+    static pick_n(n, array, combination = false) {
+        console.assert(array.length != null, "Random.pick recieved argument with undefined length attribute")
+        if (combination) {
+            // TODO
+            console.assert(false, "ERROR: no implementation")
+        }
+        return Array.from({ length: n }, (_) => array[parseInt(Math.random() * array.length)])
+
+    }
+    static pick_one(array) {
+        return this.pick_n(1, array)[0]
+    }
+}
+
+export function range(start, stop, step = 1) {
+    console.assert(step != 0, "ERROR: step must not be zero")
+
+    if (stop == undefined) {
+        stop = start
+        start = 0
+    }
+    const length = Math.max(Math.ceil((stop - start) / step), 0);
+    return Array.from({ length: length }, (_, index) => start + index * step)
+}
+
 export function add_element(parent, child_type, text = null, attributes = null, namespace = null) {
     let element;
     if (namespace != null) {

@@ -1,4 +1,4 @@
-import { add_element, remove_children, contains_alphanum } from "./utility.js"
+import { add_element, remove_children, contains_alphanum, Random, range } from "./utility.js"
 
 const state = {
     index: 0,
@@ -46,7 +46,7 @@ const DIRECTION = {
     RIGHT: "RIGHT",
     TOWARDS_USER: "TOWARDS_USER"
 }
-const picture_bets = {
+const PICTURE_BETS = {
     pbs: {
         // single
         "5": [AR.SIXL],
@@ -330,7 +330,7 @@ class Rectangle {
     }
 }
 class View {
-    constructor(positions, number_type, chip_placing_fn) {
+    constructor(bets, position_type, chip_placing_fn) {
         Rectangle.set_style("fill: tan")
         Rectangle.set_padding(-.5)
         const background = new Rectangle(2, .5, 12, 15.5)
@@ -338,22 +338,19 @@ class View {
         Rectangle.set_padding(.15)
         const header = new Rectangle(2, .4, 12, .6)
 
-        // TODO: identify which row (top, mid, bot) and which column (column, center, zero) a position belongs to
+        // TODO: I only care about the column (column, center, zero) a position belongs to
         const top_number = {
             [POSITION.ZERO]: 1,
             [POSITION.ZERO_TOP]: 1,
             [POSITION.ZERO_MID]: 1,
             [POSITION.ZERO_BOT]: 1,
-            // TODO: randomply pick value from range(from: 4, to: 31+1, step: 3)
-            [POSITION.CENTER_TOP]: 10,
-            // TODO: randomply pick value from range(from: 4, to: 31+1, step: 3)
-            [POSITION.CENTER_MID]: 10,
-            // TODO: randomply pick value from range(from: 4, to: 31+1, step: 3)
-            [POSITION.CENTER_BOT]: 10,
+            [POSITION.CENTER_TOP]: Random.pick_one(range(4, 31 + 1, 3)),
+            [POSITION.CENTER_MID]: Random.pick_one(range(4, 31 + 1, 3)),
+            [POSITION.CENTER_BOT]: Random.pick_one(range(4, 31 + 1, 3)),
             [POSITION.COLUMN_TOP]: 34,
             [POSITION.COLUMN_MID]: 34,
             [POSITION.COLUMN_BOT]: 34
-        }[number_type]
+        }[position_type]
         const top = header.ctrl_cv(DIRECTION.DOWN, { x: 6, y: 1, width: 4, height: 5, number: top_number })
         const middle = top.ctrl_cv(DIRECTION.DOWN)
         const bottom = middle.ctrl_cv(DIRECTION.DOWN)
@@ -371,9 +368,9 @@ class View {
             [POSITION.COLUMN_TOP]: top,
             [POSITION.COLUMN_MID]: middle,
             [POSITION.COLUMN_BOT]: bottom
-        }[number_type]
+        }[position_type]
 
-        this.base_coordinate_matrix = number_type == POSITION.ZERO ?
+        this.base_coordinate_matrix = position_type == POSITION.ZERO ?
             View.generate_matrix(zero.tl, zero.br, 7, 3) : View.generate_matrix(top.tl, bottom.br, 7, 3)
 
         function is_within_winning_square(point) { return winning_square.tl.y <= point.y && point.y <= winning_square.br.y }
@@ -382,7 +379,7 @@ class View {
             is_within_winning_square(point) && not_on_bottom_row(point))
 
         this.chips = []
-        if ([POSITION.CENTER_TOP, POSITION.CENTER_MID, POSITION.CENTER_BOT].includes(number_type)) {
+        if ([POSITION.CENTER_TOP, POSITION.CENTER_MID, POSITION.CENTER_BOT].includes(position_type)) {
             const left_filler = top.ctrl_cv(DIRECTION.LEFT).array(DIRECTION.DOWN, 3)
             const right_filler = top.ctrl_cv(DIRECTION.RIGHT).array(DIRECTION.DOWN, 3)
             this.rectangles = base_rectangles.concat(left_filler, right_filler,
@@ -397,16 +394,16 @@ class View {
             const winning_middle = this.coordinate_matrix.filter((p) => p.y == winning_square.center.y)
             Point.multiple_set_position(winning_middle, AR.SPLIT, AR.SU, AR.SPLIT)
 
-            if (number_type == POSITION.CENTER_MID || number_type == POSITION.CENTER_BOT) {
+            if (position_type == POSITION.CENTER_MID || position_type == POSITION.CENTER_BOT) {
                 const winning_top = this.coordinate_matrix.filter((p) => p.y == winning_square.tl.y)
                 Point.multiple_set_position(winning_top, AR.CORNER, AR.SPLIT, AR.CORNER)
             }
-            if (number_type == POSITION.CENTER_MID || number_type == POSITION.CENTER_TOP) {
+            if (position_type == POSITION.CENTER_MID || position_type == POSITION.CENTER_TOP) {
                 const winning_bottom = this.coordinate_matrix.filter((p) => p.y == winning_square.br.y)
                 Point.multiple_set_position(winning_bottom, AR.CORNER, AR.SPLIT, AR.CORNER)
             }
 
-        } else if ([POSITION.COLUMN_TOP, POSITION.COLUMN_MID, POSITION.COLUMN_BOT].includes(number_type)) {
+        } else if ([POSITION.COLUMN_TOP, POSITION.COLUMN_MID, POSITION.COLUMN_BOT].includes(position_type)) {
             const left_filler = top.ctrl_cv(DIRECTION.LEFT, { number: "2to1" }).array(DIRECTION.DOWN, 3)
             const right_filler = top.ctrl_cv(DIRECTION.RIGHT).array(DIRECTION.DOWN, 3)
             this.rectangles = base_rectangles.concat(left_filler, right_filler)
@@ -421,20 +418,20 @@ class View {
             const winning_middle = this.coordinate_matrix.filter((p) => p.y == winning_square.center.y)
             Point.multiple_set_position(winning_middle, AR.SU, AR.SPLIT)
 
-            if (number_type == POSITION.COLUMN_MID || number_type == POSITION.COLUMN_BOT) {
+            if (position_type == POSITION.COLUMN_MID || position_type == POSITION.COLUMN_BOT) {
                 const winning_top = this.coordinate_matrix.filter((p) => p.y == winning_square.tl.y)
                 Point.multiple_set_position(winning_top, AR.SPLIT, AR.CORNER)
             }
-            if (number_type == POSITION.COLUMN_MID || number_type == POSITION.COLUMN_TOP) {
+            if (position_type == POSITION.COLUMN_MID || position_type == POSITION.COLUMN_TOP) {
                 const winning_bottom = this.coordinate_matrix.filter((p) => p.y == winning_square.br.y)
                 Point.multiple_set_position(winning_bottom, AR.SPLIT, AR.CORNER)
             }
-        } else if ([POSITION.ZERO_TOP, POSITION.ZERO_MID, POSITION.ZERO_BOT, POSITION.ZERO].includes(number_type)) {
+        } else if ([POSITION.ZERO_TOP, POSITION.ZERO_MID, POSITION.ZERO_BOT, POSITION.ZERO].includes(position_type)) {
             const left_filler = top.ctrl_cv(DIRECTION.LEFT).array(DIRECTION.DOWN, 3)
             const right_filler = zero
             this.rectangles = base_rectangles.concat(right_filler, left_filler)
 
-            if (number_type == POSITION.ZERO) {
+            if (position_type == POSITION.ZERO) {
                 // extra filtering
                 this.coordinate_matrix = this.coordinate_matrix.filter((p) => p.x == zero.tl.x ||
                     p.x == zero.center.x && p.y == zero.center.y)
@@ -452,18 +449,18 @@ class View {
                 const winning_middle = this.coordinate_matrix.filter((p) => p.y == winning_square.center.y)
                 Point.multiple_set_position(winning_middle, AR.SPLIT, AR.SU, AR.SPLIT)
 
-                if (number_type == POSITION.ZERO_MID || number_type == POSITION.ZERO_BOT) {
+                if (position_type == POSITION.ZERO_MID || position_type == POSITION.ZERO_BOT) {
                     const winning_top = this.coordinate_matrix.filter((p) => p.y == winning_square.tl.y)
                     Point.multiple_set_position(winning_top, AR.CORNER, AR.SPLIT, AR.STREET)
                 }
-                if (number_type == POSITION.ZERO_MID || number_type == POSITION.ZERO_TOP) {
+                if (position_type == POSITION.ZERO_MID || position_type == POSITION.ZERO_TOP) {
                     const winning_bottom = this.coordinate_matrix.filter((p) => p.y == winning_square.br.y)
                     Point.multiple_set_position(winning_bottom, AR.CORNER, AR.SPLIT, AR.STREET)
                 }
             }
 
         }
-        positions.forEach((position) => chip_placing_fn(this.chips, position, this.coordinate_matrix))
+        bets.forEach((position) => chip_placing_fn(this.chips, position, this.coordinate_matrix))
     }
     get_payout() {
         return this.chips.reduce((int, chip) => int + chip.position, 0)
@@ -485,6 +482,16 @@ class View {
         }
 
         return points;
+    }
+    static generate_views(n, pb_count) {
+        const result = []
+        for (let i = 0; i < n; i++) {
+            const bets = PICTURE_BETS.get(...Random.pick_n(pb_count, Object.keys(PICTURE_BETS.pbs)))
+            const available_positions = bets.includes(5) ? Object.values(POSITION).filter((p) => p != POSITION.ZERO) : Object.values(POSITION)
+
+            result.push(new View(bets, Random.pick_one(available_positions), View.place_flat))
+        }
+        return result
     }
     static place_flat(chip_array, position, available_positions) {
         const same_type_positions = available_positions.filter((p) => p.position == position)
@@ -533,4 +540,4 @@ function clear() {
     remove_children(buttons, 'button')
 }
 
-export { AR, POSITION, View, state, picture_bets, set_up, handle_next }
+export { AR, POSITION, View, state, PICTURE_BETS as picture_bets, set_up, handle_next }
