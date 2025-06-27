@@ -175,10 +175,10 @@ class Rectangle {
         this.padding = Rectangle.current_style.padding
         this.style = Rectangle.current_style.style.substring(0)
 
-        this.tl = new Point(x, y)
-        this.br = new Point(x + width, y + height)
-        this.center = new Point(x + width / 2, y + height / 2)
     }
+    get tl() { return new Point(this.x, this.y) }
+    get br() { return new Point(this.x + this.width, this.y + this.height) }
+    get center() { return new Point(this.x + this.width / 2, this.y + this.height / 2) }
     ctrl_cv(direction, changes = {}) {
         let x, y, number
         switch (direction) {
@@ -227,6 +227,13 @@ class Rectangle {
         }
         return result
     }
+    overlap(...target_rectangles) {
+        const bounding_box = Rectangle.bounding_box(...target_rectangles)
+        this.x = bounding_box.x
+        this.y = bounding_box.y
+        this.width = bounding_box.width
+        this.height = bounding_box.height
+    }
     to_svg_rect() {
         return Object.assign({
             x: this.x + (this.padding ? this.padding : 0),
@@ -271,43 +278,100 @@ class Rectangle {
         Rectangle.current_style.padding = 0
     }
     // modifies `zero_rectangle`s to_svg_rect function to have the parameters of a polygon type element
-    static create_zero_area(zero_rectangle) {
-        const point_pairs = [
-            `${zero_rectangle.tl.x + zero_rectangle.padding},${zero_rectangle.tl.y - zero_rectangle.height + zero_rectangle.padding}`,
-            `${zero_rectangle.center.x - zero_rectangle.padding},${zero_rectangle.tl.y - zero_rectangle.height + zero_rectangle.padding}`,
-            `${zero_rectangle.br.x - zero_rectangle.padding},${zero_rectangle.center.y}`,
-            `${zero_rectangle.center.x - zero_rectangle.padding},${zero_rectangle.br.y + zero_rectangle.height - zero_rectangle.padding}`,
-            `${zero_rectangle.tl.x + zero_rectangle.padding},${zero_rectangle.br.y + zero_rectangle.height - zero_rectangle.padding}`,
+    static extend_zero_area(zero_r) {
+        const points = [
+            `${zero_r.tl.x + zero_r.padding},${zero_r.tl.y - zero_r.height + zero_r.padding}`,
+            `${zero_r.center.x - zero_r.padding},${zero_r.tl.y - zero_r.height + zero_r.padding}`,
+            `${zero_r.br.x - zero_r.padding},${zero_r.center.y}`,
+            `${zero_r.center.x - zero_r.padding},${zero_r.br.y + zero_r.height - zero_r.padding}`,
+            `${zero_r.tl.x + zero_r.padding},${zero_r.br.y + zero_r.height - zero_r.padding}`,
         ]
-        zero_rectangle.tl = new Point(zero_rectangle.tl.x, zero_rectangle.tl.y - zero_rectangle.height)
-        zero_rectangle.br = new Point(zero_rectangle.br.x, zero_rectangle.br.y + zero_rectangle.height)
+        // new origin is moved up by height
+        zero_r.y -= zero_r.height
+        // new height is trippled
+        zero_r.height *= 3
+        // new width is halved
+        zero_r.width /= 2
 
-        zero_rectangle.to_svg_rect = () => {
+        zero_r.to_svg_rect = () => {
             return Object.assign({
-                points: point_pairs.join(" ")
-            }, zero_rectangle.style ? { style: zero_rectangle.style } : {})
+                points: points.join(" ")
+            }, zero_r.style ? { style: zero_r.style } : {})
         }
-        return zero_rectangle
+        // NOTE: this is sick
+        Object.defineProperty(zero_r, "center", {
+            get() {
+                return new Point(zero_r.x + zero_r.width, zero_r.y + zero_r.height / 2)
+            }
+        })
+        return zero_r
+    }
+    static extend_background(bg, left_filler, right_filler) {
+        if (left_filler.length != undefined) {
+            left_filler = left_filler[0]
+        }
+        if (right_filler.length != undefined) {
+            right_filler = right_filler[0]
+        }
+        const points = [
+            `${bg.tl.x},${bg.tl.y + bg.padding}`,
+            `${bg.br.x},${bg.tl.y + bg.padding}`,
+            `${bg.br.x + right_filler.width - bg.padding},${bg.tl.y + bg.padding}`,
+            `${bg.br.x + bg.width - bg.padding},${bg.center.y}`,
+            `${bg.br.x + right_filler.width - bg.padding},${bg.br.y - bg.padding}`,
+            `${bg.br.x},${bg.br.y - bg.padding}`,
+            `${bg.tl.x},${bg.br.y - bg.padding}`,
+            `${bg.tl.x - left_filler.width + bg.padding},${bg.br.y - bg.padding}`,
+            `${bg.tl.x - bg.width + bg.padding},${bg.center.y}`,
+            `${bg.tl.x - left_filler.width + bg.padding},${bg.tl.y + bg.padding}`,
+        ]
+        // NOTE: I have an if statement 
+        // that interprets a rectangle as a polygon if number == 0
+        bg.number = 0
+        bg.to_svg_rect = () => {
+            return Object.assign({
+                points: points.join(" ")
+            }, bg.style ? { style: bg.style } : {})
+        }
+    }
+    static extend_header(header, left_filler, right_filler) {
+        if (left_filler.length != undefined) {
+            left_filler = left_filler[0]
+        }
+        if (right_filler.length != undefined) {
+            right_filler = right_filler[0]
+        }
+
+        function is_column_filler(filler) {
+            return contains_alphanum(filler.number)
+        }
+        // NOTE: header does not overlap column filler, 
+        // so interpret it's width as 0 
+        const left_filler_width = left_filler.width * !is_column_filler(left_filler)
+        header.x = header.x - left_filler_width
+        header.width = left_filler_width + header.width + right_filler.width
+    }
+    static bounding_box(...rectangles) {
+        // ** GPT 4o generated code **
+        // Initialize bounding box values
+        let min_x = Infinity, min_y = Infinity;
+        let max_x = -Infinity, max_y = -Infinity;
+
+        // Find the bounding box that contains all rectangles
+        for (const rect of rectangles) {
+            min_x = Math.min(min_x, rect.tl.x);
+            min_y = Math.min(min_y, rect.tl.y);
+            max_x = Math.max(max_x, rect.br.x);
+            max_y = Math.max(max_y, rect.br.y);
+        }
+        return new Rectangle(min_x, min_y, max_x - min_x, max_y - min_y)
     }
     // returns a Rectangle object that overlaps all `rectangles`
     // and has a gradient to `direction` going from transparent to background_color
     static create_gradient(direction, rectangles) {
-        // ** GPT 4o generated code start **
-        // Initialize bounding box values
-        let minX = Infinity, minY = Infinity;
-        let maxX = -Infinity, maxY = -Infinity;
-
-        // Find the bounding box that contains all rectangles
-        for (const rect of rectangles) {
-            minX = Math.min(minX, rect.tl.x);
-            minY = Math.min(minY, rect.tl.y);
-            maxX = Math.max(maxX, rect.br.x);
-            maxY = Math.max(maxY, rect.br.y);
-        }
-
-        const toppest_of_left = new Point(minX, minY);
-        const bottomest_of_right = new Point(maxX, maxY);
-        // ** GPT 4o generated code end **
+        const bounding_box = Rectangle.bounding_box(...rectangles)
+        const toppest_of_left = bounding_box.tl;
+        const bottomest_of_right = bounding_box.br;
 
         const previous_style = Rectangle.current_style.style.substring(0)
         switch (direction) {
@@ -331,13 +395,14 @@ class Rectangle {
 }
 class View {
     constructor(bets, position_type, chip_placing_fn) {
+        const gap = .15
         Rectangle.set_style("fill: tan")
-        Rectangle.set_padding(-.5)
-        const background = new Rectangle(2, .5, 12, 15.5)
+        Rectangle.set_padding(-gap)
+        const background = new Rectangle(0, 0, 0, 0)
+        const header_background = new Rectangle(0, 0, 0, 0)
         Rectangle.set_style("fill: wheat")
-        Rectangle.set_padding(.15)
-        const header = new Rectangle(2, .4, 12, .6)
-
+        Rectangle.set_padding(gap)
+        const header = new Rectangle(6, -1 - gap * 4, 4, 2)
         // TODO: I only care about the column (column, center, zero) a position belongs to
         const top_number = {
             [POSITION.ZERO]: 1,
@@ -351,12 +416,14 @@ class View {
             [POSITION.COLUMN_MID]: 34,
             [POSITION.COLUMN_BOT]: 34
         }[position_type]
-        const top = header.ctrl_cv(DIRECTION.DOWN, { x: 6, y: 1, width: 4, height: 5, number: top_number })
+        const top = header.ctrl_cv(DIRECTION.DOWN, { y: 1, height: 5, number: top_number })
         const middle = top.ctrl_cv(DIRECTION.DOWN)
         const bottom = middle.ctrl_cv(DIRECTION.DOWN)
-        const zero = Rectangle.create_zero_area(middle.ctrl_cv(DIRECTION.RIGHT, { number: 0 }))
+        // NOTE: intermediary state to at least wrap around the middle boxes
+        background.overlap(top, middle, bottom)
+        const zero = Rectangle.extend_zero_area(middle.ctrl_cv(DIRECTION.RIGHT, { number: 0 }))
 
-        const base_rectangles = [background, header, top, middle, bottom]
+        const base_rectangles = [background, header_background, header, top, middle, bottom]
         const winning_square = {
             [POSITION.ZERO]: zero,
             [POSITION.ZERO_TOP]: top,
@@ -379,9 +446,11 @@ class View {
             is_within_winning_square(point) && not_on_bottom_row(point))
 
         this.chips = []
+        let left_filler = null
+        let right_filler = null
         if ([POSITION.CENTER_TOP, POSITION.CENTER_MID, POSITION.CENTER_BOT].includes(position_type)) {
-            const left_filler = top.ctrl_cv(DIRECTION.LEFT).array(DIRECTION.DOWN, 3)
-            const right_filler = top.ctrl_cv(DIRECTION.RIGHT).array(DIRECTION.DOWN, 3)
+            left_filler = top.ctrl_cv(DIRECTION.LEFT).array(DIRECTION.DOWN, 3)
+            right_filler = top.ctrl_cv(DIRECTION.RIGHT).array(DIRECTION.DOWN, 3)
             this.rectangles = base_rectangles.concat(left_filler, right_filler,
                 // TODO: revisit focus guiding another time
                 // [Rectangle.create_gradient(DIRECTION.LEFT, left_filler), Rectangle.create_gradient(DIRECTION.RIGHT, right_filler)]
@@ -404,8 +473,8 @@ class View {
             }
 
         } else if ([POSITION.COLUMN_TOP, POSITION.COLUMN_MID, POSITION.COLUMN_BOT].includes(position_type)) {
-            const left_filler = top.ctrl_cv(DIRECTION.LEFT, { number: "2to1" }).array(DIRECTION.DOWN, 3)
-            const right_filler = top.ctrl_cv(DIRECTION.RIGHT).array(DIRECTION.DOWN, 3)
+            left_filler = top.ctrl_cv(DIRECTION.LEFT, { number: "2to1" }).array(DIRECTION.DOWN, 3)
+            right_filler = top.ctrl_cv(DIRECTION.RIGHT).array(DIRECTION.DOWN, 3)
             this.rectangles = base_rectangles.concat(left_filler, right_filler)
 
             // extra filtering
@@ -427,8 +496,8 @@ class View {
                 Point.multiple_set_position(winning_bottom, AR.SPLIT, AR.CORNER)
             }
         } else if ([POSITION.ZERO_TOP, POSITION.ZERO_MID, POSITION.ZERO_BOT, POSITION.ZERO].includes(position_type)) {
-            const left_filler = top.ctrl_cv(DIRECTION.LEFT).array(DIRECTION.DOWN, 3)
-            const right_filler = zero
+            left_filler = top.ctrl_cv(DIRECTION.LEFT).array(DIRECTION.DOWN, 3)
+            right_filler = zero
             this.rectangles = base_rectangles.concat(right_filler, left_filler)
 
             if (position_type == POSITION.ZERO) {
@@ -460,6 +529,9 @@ class View {
             }
 
         }
+        Rectangle.extend_background(background, left_filler, right_filler)
+        Rectangle.extend_header(header, left_filler, right_filler)
+        header_background.overlap(header)
         bets.forEach((position) => chip_placing_fn(this.chips, position, this.coordinate_matrix))
     }
     get_payout() {
@@ -523,8 +595,13 @@ function set_up() {
     }
     )
 
-    state.view.chips.forEach((chip, _, chip_array) =>
-        add_chip(document.getElementById("table"), chip.x, chip.y, .9, chip.count(chip_array)))
+    state.view.chips.forEach((chip, chip_index, chip_array) => {
+        // if chip is at the top
+        if (!chip_array.slice(chip_index + 1).includes(chip)) {
+            add_chip(document.getElementById("table"), chip.x, chip.y, .9, chip.count(chip_array))
+        }
+    })
+
     // state.view.coordinate_matrix.forEach((chip, _, chip_array) =>
     //     add_chip(document.getElementById("table"), chip.x, chip.y, .9, chip.position))
     populate_buttons(state.view.get_payout(), 1)
