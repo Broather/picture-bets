@@ -65,7 +65,7 @@ const PICTURE_BETS = {
     }
 }
 
-function add_chip(parent, x, y, radius, multiplier = null) {
+function add_chip(parent, x, y, radius, count) {
     add_element(parent,
         'circle',
         null,
@@ -76,13 +76,11 @@ function add_chip(parent, x, y, radius, multiplier = null) {
         null,
         { cx: x, cy: y, r: radius - 0.3 * radius, stroke: "white", "stroke-width": 0.1, "stroke-dasharray": 0.25 },
         'http://www.w3.org/2000/svg')
-    if (multiplier != null) {
-        add_element(parent,
-            'text',
-            `${multiplier}`,
-            { class: "chip", x: x, y: y },
-            'http://www.w3.org/2000/svg')
-    }
+    add_element(parent,
+        'text',
+        `${count}`,
+        { class: "chip", x: x, y: y },
+        'http://www.w3.org/2000/svg')
 }
 
 function handle_answer(event) {
@@ -124,18 +122,18 @@ function add_button(parent, text) {
     button.addEventListener('click', handle_answer)
     parent.appendChild(button)
 }
-function populate_buttons(answer, multiplier) {
+function populate_buttons(answer) {
     const buttons = document.getElementById('buttons')
     const total_buttons = 3
 
     const n = Math.floor(Math.random() * total_buttons)
     for (let i = 0; i < n; i++) {
-        add_button(buttons, answer * multiplier - (n - i))
+        add_button(buttons, answer - (n - i))
     }
-    add_button(buttons, answer * multiplier)
+    add_button(buttons, answer)
 
     for (let i = 0; i < total_buttons - (n + 1); i++) {
-        add_button(buttons, answer * multiplier + (i + 1))
+        add_button(buttons, answer + (i + 1))
     }
 }
 function update_counter() {
@@ -150,7 +148,6 @@ class Point {
         this.position = null
     }
     // counts how many references of `this` array contains
-    // NOTE: equality operator between points should work as intended as long as coordinates do not change
     count(array) {
         return array.filter((p) => p == this).length
     }
@@ -424,6 +421,7 @@ class View {
         const zero = Rectangle.extend_zero_area(middle.ctrl_cv(DIRECTION.RIGHT, { number: 0 }))
 
         const base_rectangles = [background, header_background, header, top, middle, bottom]
+        // TODO: I only care about the row (TOP, MID, BOT) a position belongs to
         const winning_square = {
             [POSITION.ZERO]: zero,
             [POSITION.ZERO_TOP]: top,
@@ -604,7 +602,7 @@ function set_up() {
 
     // state.view.coordinate_matrix.forEach((chip, _, chip_array) =>
     //     add_chip(document.getElementById("table"), chip.x, chip.y, .9, chip.position))
-    populate_buttons(state.view.get_payout(), 1)
+    populate_buttons(state.view.get_payout())
     state.tick = Date.now()
 }
 function clear() {
