@@ -39,14 +39,15 @@
     </body>
 
     <script type="module">
-        import { state, View, set_up, handle_next } from "./game_logic.js"
+        import { View } from "./game_logic.js"
+        import { state, set_up } from "./ui_handlers.js"
 
         addEventListener('load', (event) => {
-            document.getElementById("next").onclick = handle_next
             document.documentElement.style.setProperty('--chip_color', sessionStorage.getItem('chip_color'))
 
             const pb_count = parseInt(sessionStorage.getItem('pb_count'))
             const half = Math.floor(pb_count / 2)
+            // first half is single picture bets and second half has combinations of 2 pbs
             state.views = [...View.generate_views(half, 1), ...View.generate_views(pb_count - half, 2)]
             set_up()
         })
