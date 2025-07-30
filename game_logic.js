@@ -50,14 +50,29 @@ const PICTURE_BETS = {
     pbs: {
         // single
         "5": [AR.SIXL],
+        "8": [AR.CORNER],
         "11": [AR.STREET],
+        "17": [AR.SPLIT],
+        "35": [AR.SU],
         // small
+        "25": [AR.SPLIT, AR.CORNER],
+        "33": [AR.CORNER, AR.SPLIT, AR.CORNER],
+        "21": [AR.SIXL, AR.STREET, AR.SIXL],
+        "60": [AR.SU, AR.SPLIT, AR.CORNER],
+        "52": [AR.SU, AR.SPLIT],
+        "51": [AR.CORNER, AR.SU, AR.CORNER],
         "43": [AR.SU, AR.CORNER],
         "69": [AR.SU, AR.SPLIT, AR.SPLIT],
         // medium
+        "77": [AR.SPLIT, AR.SU, AR.CORNER, AR.SPLIT],
+        "88": [AR.CORNER, AR.SPLIT, AR.CORNER, AR.SPLIT, AR.SPLIT, AR.SIXL, AR.STREET, AR.SIXL],
+        "100": [AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.CORNER, AR.CORNER, AR.CORNER, AR.CORNER],
+        "86": [AR.SU, AR.SPLIT, AR.SPLIT, AR.SPLIT],
+        "67": [AR.CORNER, AR.CORNER, AR.CORNER, AR.CORNER, AR.SU],
         "103": [AR.SU, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.SPLIT],
         "102": [AR.SU, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.CORNER, AR.CORNER],
         // large
+        "135": [AR.SU, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.CORNER, AR.CORNER, AR.CORNER, AR.CORNER],
         "165": [AR.SU, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.STREET, AR.STREET, AR.STREET, AR.CORNER, AR.CORNER, AR.CORNER, AR.SIXL]
     },
     get(...keys) {
@@ -568,8 +583,7 @@ class View {
         console.assert(same_type_positions.length > 0, `ERROR in place_flat: trying to place position of payout value of ${position} \nMight be trying to place sixline on Zero`)
 
         // sort by how many chips are on a specific position (ascending) and add the first one
-        chip_array.push(same_type_positions.toSorted((a, b) => a.count(chip_array) -
-            b.count(chip_array))[0])
+        chip_array.push(same_type_positions.toSorted((a, b) => a.count(chip_array) - b.count(chip_array))[0])
     }
 
 }
@@ -615,4 +629,4 @@ function clear() {
     remove_children(buttons, 'button')
 }
 
-export { AR, POSITION, View, state, PICTURE_BETS as picture_bets, set_up, handle_next }
+export { AR, POSITION, View, state, PICTURE_BETS, set_up, handle_next }

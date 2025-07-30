@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { AR, POSITION, View } from "./game_logic";
+import { AR, POSITION, PICTURE_BETS, View } from "./game_logic";
 
 describe("coordinate matrix sum", () => {
     const test_cases = {
@@ -22,6 +22,16 @@ describe("coordinate matrix sum", () => {
             const result = view.coordinate_matrix.reduce((int, chip) => int + chip.position, 0)
             // Assert
             expect(result).toBe(test_cases[key])
+        })
+    }
+})
+describe("picture bet validity", () => {
+    for (let key in PICTURE_BETS.pbs) {
+        it(`picture bet ${key}'s positions should sum to ${key}`, () => {
+            // Arrange
+            // Act
+            // Assert
+            expect(PICTURE_BETS.pbs[key].reduce((a, b) => a + b, 0)).toBe(parseInt(key))
         })
     }
 })
