@@ -14,31 +14,24 @@
             <div class="center" style="width: fit-content;">
 
                 <span>Picture bets</span>
-                <svg width="100" height="100" viewBox="-2.5 -2.5 7 6" xmlns="http://www.w3.org/2000/svg">
+                <svg width="100" height="100" viewBox="-1 -1 3 3" xmlns="http://www.w3.org/2000/svg">
                     <!-- Outer circle (rim) -->
-                    <circle cx="0" cy="0" r="2" stroke="white" stroke-width="0.3" stroke-dasharray="0.3, 0.6" />
-                    <circle cx="0" cy="0" r="1.2" stroke="white" stroke-width="0.1" stroke-dasharray="0.25" />
+                    <circle cx="0" cy="0" r="1" />
+                    <circle cx="0" cy="0" r=".6" />
 
-                    <circle cx="1" cy="1" r="2" stroke="white" stroke-width="0.3" stroke-dasharray="0.3, 0.6" />
-                    <circle cx="1" cy="1" r="1.2" stroke="white" stroke-width="0.1" stroke-dasharray="0.25" />
-
-                    <circle cx="2" cy="0" r="2" stroke="white" stroke-width="0.3" stroke-dasharray="0.3, 0.6" />
-                    <circle cx="2" cy="0" r="1.2" stroke="white" stroke-width="0.1" stroke-dasharray="0.25" />
+                    <circle cx="1" cy="1" r="1" />
+                    <circle cx="1" cy="1" r=".6" />
 
                 </svg>
                 <form id="form">
                     <ul>
                         <li>
-                            <input type="checkbox" name="common_pb" id="common_pb">
-                            <label for="common_pb">Common</label>
+                            <input type="number" min="1" max="69" step="1" name="pb_count" id="pb_count" required>
+                            <label for="common_pb">Amount of picture bets</label>
                         </li>
                         <li>
-                            <input type="checkbox" name="uncommon_pb" id="uncommon_pb">
-                            <label for="uncommon_pb">Uncommon</label>
-                        </li>
-                        <li>
-                            <input type="checkbox" name="around_zero_pb" id="around_zero_pb">
-                            <label for="around_zero_pb">Around zero</label>
+                            <input type="color" name="chip_color" id="chip_color" required>
+                            <label for="common_pb">Chip color</label>
                         </li>
                     </ul>
                     <input class="big" type="submit" value="Play">
@@ -48,18 +41,25 @@
     </body>
 
     <script>
+        addEventListener('load', (event) => {
+            // set default value for pb_count
+            document.getElementById('pb_count').value = sessionStorage.getItem('pb_count') || 10
+            // set default value for chip_color
+            document.getElementById('chip_color').value = sessionStorage.getItem('chip_color') || '#8B0000'
+            // set --chip_color to the value of chip_color
+            document.documentElement.style.setProperty('--chip_color', document.getElementById('chip_color').value)
+        })
         document.getElementById('form').addEventListener('submit', (event) => {
             event.preventDefault()
-            // TODO: expose pb_mapping from sript.js and loop through it's keys using .keys
-            const keys = ['common_pb', 'uncommon_pb', 'around_zero_pb']
             // save values to sessionStorage
-            for (key of keys) {
-                sessionStorage.setItem(key, document.getElementById(key).checked)
-            }
-
-            if (keys.some((key) => sessionStorage.getItem(key) === 'true')) {
-                window.location.href = 'game.html'
-            }
+            sessionStorage.setItem('pb_count', document.getElementById('pb_count').value)
+            // open styles.css, queryselector root:, set --chip_color to document.get_ElementById('chip_color').value
+            sessionStorage.setItem('chip_color', document.getElementById('chip_color').value)
+            // redirect to game.html
+            window.location.href = 'game.html'
+        })
+        document.getElementById('chip_color').addEventListener('input', (event) => {
+            document.documentElement.style.setProperty('--chip_color', event.target.value)
         })
     </script>
 
