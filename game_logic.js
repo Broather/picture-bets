@@ -122,20 +122,20 @@ function add_button(parent, text) {
     button.addEventListener('click', handle_answer)
     parent.appendChild(button)
 }
-function populate_buttons(answer) {
-    const buttons = document.getElementById('buttons')
-    const total_buttons = 3
+// function populate_buttons(answer) {
+//     const buttons = document.getElementById('buttons')
+//     const total_buttons = 3
 
-    const n = Math.floor(Math.random() * total_buttons)
-    for (let i = 0; i < n; i++) {
-        add_button(buttons, answer - (n - i))
-    }
-    add_button(buttons, answer)
+//     const n = Math.floor(Math.random() * total_buttons)
+//     for (let i = 0; i < n; i++) {
+//         add_button(buttons, answer - (n - i))
+//     }
+//     add_button(buttons, answer)
 
-    for (let i = 0; i < total_buttons - (n + 1); i++) {
-        add_button(buttons, answer + (i + 1))
-    }
-}
+//     for (let i = 0; i < total_buttons - (n + 1); i++) {
+//         add_button(buttons, answer + (i + 1))
+//     }
+// }
 function update_counter() {
     const counter = document.getElementById('counter')
     counter.textContent = `${state.index + 1}/${state.views.length}`
@@ -600,9 +600,22 @@ function set_up() {
         }
     })
 
-    // state.view.coordinate_matrix.forEach((chip, _, chip_array) =>
-    //     add_chip(document.getElementById("table"), chip.x, chip.y, .9, chip.position))
-    populate_buttons(state.view.get_payout())
+    const modal = document.getElementById("modal")
+    const answer = document.getElementById("answer")
+    const close = document.getElementById("close")
+    answer.onclick = (event) => {
+        modal.style.display = "block"
+    }
+    close.onclick = (event) => {
+        modal.style.display = "none"
+    }
+    window.onclick = (event) => {
+        if (event.target == modal) {
+            modal.style.display = "none"
+        }
+    }
+
+    // populate_buttons(state.view.get_payout())
     state.tick = Date.now()
 }
 function clear() {
