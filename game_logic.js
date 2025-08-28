@@ -98,6 +98,7 @@ function handle_answer(event) {
 function handle_next() {
     document.getElementById('next').setAttribute('hidden', 'hidden')
     document.getElementById('modal_input').disabled = false
+    close_modal()
     clear()
     state.index++
     if (state.game_should_end()) {
@@ -114,13 +115,16 @@ function handle_next() {
     set_up()
 }
 
-function open_modal(event) {
+function open_modal() {
     document.getElementById("modal").style.display = "block"
     document.getElementById("modal_input").focus()
 
-    // TODO: modal needs a reference to the target that opened it
-    // for peek button to work and to re-enable it when modal closes
-    event.target.disabled = true
+    document.getElementById("answer").disabled = true
+}
+function close_modal(though_peek = false) {
+    document.getElementById("modal").style.display = "none"
+    if (!though_peek) { answer.disabled = false }
+
 }
 
 function add_button(parent, text) {
@@ -623,25 +627,22 @@ function set_up() {
     }
 
     modal_close.onclick = (event) => {
-        modal.style.display = "none"
-        answer.disabled = false
+        close_modal()
     }
     window.onclick = (event) => {
         if (event.target == modal) {
-            modal.style.display = "none"
-            answer.disabled = false
+            close_modal()
         }
     }
     // Hide modal while button is held
     modal_peek.addEventListener("mousedown", () => {
-        modal.style.display = "none";
+        close_modal(true)
     });
 
     // Show modal again on release (mouseup anywhere on document)
     document.addEventListener("mouseup", () => {
         if (answer.disabled == true) {
-            modal.style.display = "block";
-            modal_input.focus()
+            open_modal()
         }
     })
     // populate_buttons(state.view.get_payout())

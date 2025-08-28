@@ -30,21 +30,21 @@
                     </linearGradient>
                 </defs>
             </svg>
-            <button class="big" style="margin-top: 30px; display: block; margin: auto;" id="answer">Answer</button>
-            <div class="row">
-                <button class="big" id="next" hidden>Next</button>
-            </div>
+            <button class="big center" id="answer">Answer</button>
         </div>
         <div id="modal" class="modal">
             <!-- Modal content -->
             <div class="modal-content">
                 <span id="close" class="close">&times;</span>
-                <svg viewbox="0 0 25 30">
+                <svg viewbox="0 0 25 25">
                     <rect x="0" y="0" width="25" height="25" />
                     <text class="layout" id="modal_payout" x="12" y="12">0</text>
                 </svg>
                 <input class="center" id="modal_input" type="number">
                 <input class="big center" id="modal_check" type="submit" value="Check">
+                <div class="row">
+                    <button class="big" id="next" hidden>Next</button>
+                </div>
                 <input id="modal_peek" type="button" value="peek">
             </div>
 
