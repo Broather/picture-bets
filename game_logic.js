@@ -1,4 +1,4 @@
-import { add_element, remove_children, contains_alphanum, Random, range } from "./utility.js"
+import { add_element, remove_children, remove_classes, contains_alphanum, Random, range } from "./utility.js"
 
 const state = {
     index: 0,
@@ -84,23 +84,20 @@ function add_chip(parent, x, y, radius, count) {
 }
 
 function handle_answer(event) {
-    function any_button_has(_class) {
-        return Array.from(document.getElementById("buttons").children).some((c) => c.className.trim() == _class)
-    }
-    if (!any_button_has("correct")) {
-        if (parseInt(this.textContent) == state.view.get_payout()) {
-            this.classList.add('correct')
-            document.getElementById('next').removeAttribute('hidden')
-        } else {
-            if (!any_button_has("incorrect")) { state.mistakes++ }
-
-            this.classList.add('incorrect')
-        }
+    const _this = event.target
+    if (parseInt(document.getElementById("modal_payout").textContent) == state.view.get_payout()) {
+        _this.classList.add('correct')
+        document.getElementById("modal_input").disabled = true
+        document.getElementById('next').removeAttribute('hidden')
+    } else {
+        _this.classList.add('incorrect')
+        state.mistakes++
     }
 }
 
 function handle_next() {
     document.getElementById('next').setAttribute('hidden', 'hidden')
+    document.getElementById('modal_input').disabled = false
     clear()
     state.index++
     if (state.game_should_end()) {
@@ -116,6 +113,16 @@ function handle_next() {
     state.delta_time(Date.now())
     set_up()
 }
+
+function open_modal(event) {
+    document.getElementById("modal").style.display = "block"
+    document.getElementById("modal_input").focus()
+
+    // TODO: modal needs a reference to the target that opened it
+    // for peek button to work and to re-enable it when modal closes
+    event.target.disabled = true
+}
+
 function add_button(parent, text) {
     const button = document.createElement('button')
     button.textContent = text
@@ -601,31 +608,54 @@ function set_up() {
     })
 
     const modal = document.getElementById("modal")
-    const answer = document.getElementById("answer")
-    const close = document.getElementById("close")
-    answer.onclick = (event) => {
-        modal.style.display = "block"
+    const modal_close = document.getElementById("close")
+    const modal_input = document.getElementById("modal_input")
+    const modal_peek = document.getElementById("modal_peek")
+    const modal_payout = document.getElementById("modal_payout")
+    const modal_check = document.getElementById("modal_check")
+
+    document.getElementById('modal_input').value = ""
+    document.getElementById('modal_payout').innerHTML = 0
+
+    modal_input.oninput = (event) => {
+        modal_payout.innerHTML = modal_input.value
+        if (modal_check.classList.length > 0) { remove_classes(modal_check, ["correct", "incorrect"]) }
     }
-    close.onclick = (event) => {
+
+    modal_close.onclick = (event) => {
         modal.style.display = "none"
+        answer.disabled = false
     }
     window.onclick = (event) => {
         if (event.target == modal) {
             modal.style.display = "none"
+            answer.disabled = false
         }
     }
+    // Hide modal while button is held
+    modal_peek.addEventListener("mousedown", () => {
+        modal.style.display = "none";
+    });
 
+    // Show modal again on release (mouseup anywhere on document)
+    document.addEventListener("mouseup", () => {
+        if (answer.disabled == true) {
+            modal.style.display = "block";
+            modal_input.focus()
+        }
+    })
     // populate_buttons(state.view.get_payout())
     state.tick = Date.now()
 }
 function clear() {
     const table = document.getElementById('table')
-    const buttons = document.getElementById('buttons')
+    const modal_input = document.getElementById('modal_input')
     remove_children(table, 'rect')
     remove_children(table, 'circle')
     remove_children(table, 'text')
     remove_children(table, 'polygon')
-    remove_children(buttons, 'button')
+    // remove_children(buttons, 'button')
+    remove_classes(modal_check, ["correct", "incorrect"])
 }
 
-export { AR, POSITION, View, state, PICTURE_BETS as picture_bets, set_up, handle_next }
+export { AR, POSITION, View, state, PICTURE_BETS as picture_bets, set_up, handle_next, handle_answer, open_modal }

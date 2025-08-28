@@ -30,31 +30,36 @@
                     </linearGradient>
                 </defs>
             </svg>
+            <button class="big" style="margin-top: 30px; display: block; margin: auto;" id="answer">Answer</button>
             <div class="row">
-                <button class="big" id="answer">Answer</button>
-            </div>
-            <div class="row" style="margin-top: 30px;">
                 <button class="big" id="next" hidden>Next</button>
             </div>
         </div>
         <div id="modal" class="modal">
-
             <!-- Modal content -->
             <div class="modal-content">
                 <span id="close" class="close">&times;</span>
-                <p>Imagine a bunch of chips layed out on the table as you type numbers</p>
+                <svg viewbox="0 0 25 30">
+                    <rect x="0" y="0" width="25" height="25" />
+                    <text class="layout" id="modal_payout" x="12" y="12">0</text>
+                </svg>
+                <input class="center" id="modal_input" type="number">
+                <input class="big center" id="modal_check" type="submit" value="Check">
+                <input id="modal_peek" type="button" value="peek">
             </div>
 
         </div>
     </body>
 
     <script type="module">
-        import { state, View, set_up, handle_next } from "./game_logic.js"
+        import { state, View, set_up, handle_next, handle_answer, open_modal } from "./game_logic.js"
 
         addEventListener('load', (event) => {
             document.getElementById("next").onclick = handle_next
-            document.documentElement.style.setProperty('--chip_color', sessionStorage.getItem('chip_color'))
+            document.getElementById("answer").onclick = open_modal
+            document.getElementById("modal_check").onclick = handle_answer
 
+            document.documentElement.style.setProperty('--chip_color', sessionStorage.getItem('chip_color'))
             const pb_count = parseInt(sessionStorage.getItem('pb_count'))
             const half = Math.floor(pb_count / 2)
             state.views = [...View.generate_views(half, 1), ...View.generate_views(pb_count - half, 2)]

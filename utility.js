@@ -47,6 +47,11 @@ export function remove_children(parent, type) {
     children.forEach(child => parent.removeChild(child));
 }
 
+export function remove_classes(target, filter = null) {
+    const classes_to_remove = filter ? filter : target.classList
+    classes_to_remove.forEach((_class) => target.classList.remove(_class))
+}
+
 export function contains_alphanum(n) {
     const str_n = String(n)
     for (let i = 0; i < str_n.length; i++) {
