@@ -69,12 +69,12 @@ function add_chip(parent, x, y, radius, count) {
     add_element(parent,
         'circle',
         null,
-        { cx: x, cy: y, r: radius, stroke: "white", "stroke-width": 0.3, "stroke-dasharray": "0.3, 0.6" },
-        'http://www.w3.org/2000/svg',)
+        { class: "outer", cx: x, cy: y, r: radius, pathLength: 40 },
+        'http://www.w3.org/2000/svg')
     add_element(parent,
         'circle',
         null,
-        { cx: x, cy: y, r: radius - 0.3 * radius, stroke: "white", "stroke-width": 0.1, "stroke-dasharray": 0.25 },
+        { class: "inner", cx: x, cy: y, r: radius - 0.3 * radius, pathLength: 29 },
         'http://www.w3.org/2000/svg')
     add_element(parent,
         'text',
@@ -121,32 +121,12 @@ function open_modal() {
 
     document.getElementById("answer").disabled = true
 }
+
 function close_modal(though_peek = false) {
     document.getElementById("modal").style.display = "none"
     if (!though_peek) { answer.disabled = false }
-
 }
 
-function add_button(parent, text) {
-    const button = document.createElement('button')
-    button.textContent = text
-    button.addEventListener('click', handle_answer)
-    parent.appendChild(button)
-}
-// function populate_buttons(answer) {
-//     const buttons = document.getElementById('buttons')
-//     const total_buttons = 3
-
-//     const n = Math.floor(Math.random() * total_buttons)
-//     for (let i = 0; i < n; i++) {
-//         add_button(buttons, answer - (n - i))
-//     }
-//     add_button(buttons, answer)
-
-//     for (let i = 0; i < total_buttons - (n + 1); i++) {
-//         add_button(buttons, answer + (i + 1))
-//     }
-// }
 function update_counter() {
     const counter = document.getElementById('counter')
     counter.textContent = `${state.index + 1}/${state.views.length}`
@@ -659,4 +639,4 @@ function clear() {
     remove_classes(modal_check, ["correct", "incorrect"])
 }
 
-export { AR, POSITION, View, state, PICTURE_BETS as picture_bets, set_up, handle_next, handle_answer, open_modal }
+export { AR, POSITION, View, state, PICTURE_BETS as picture_bets, set_up, handle_next, handle_answer, open_modal, add_chip }
