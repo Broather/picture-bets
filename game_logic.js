@@ -1,24 +1,4 @@
-import { add_element, remove_children, remove_classes, contains_alphanum, Random, range } from "./utility.js"
-
-const state = {
-    index: 0,
-    views: [],
-    get view() {
-        return this.views[this.index]
-    },
-    game_should_end() {
-        return this.index >= this.views.length
-    },
-    mistakes: 0,
-    tick: -1,
-    times: [],
-    delta_time(tock) {
-        this.times.push(parseFloat(((tock - this.tick) / 1000).toFixed(2)))
-    },
-    average_delta_time() {
-        return this.times.reduce((a, b) => a + b, 0) / this.times.length
-    }
-}
+import { contains_alphanum, Random, range } from "./utility.js"
 
 const AR = {
     SIXL: 5,
@@ -50,86 +30,34 @@ const PICTURE_BETS = {
     pbs: {
         // single
         "5": [AR.SIXL],
+        "8": [AR.CORNER],
         "11": [AR.STREET],
+        "17": [AR.SPLIT],
+        "35": [AR.SU],
         // small
+        "25": [AR.SPLIT, AR.CORNER],
+        "33": [AR.CORNER, AR.SPLIT, AR.CORNER],
+        "21": [AR.SIXL, AR.STREET, AR.SIXL],
+        "60": [AR.SU, AR.SPLIT, AR.CORNER],
+        "52": [AR.SU, AR.SPLIT],
+        "51": [AR.CORNER, AR.SU, AR.CORNER],
         "43": [AR.SU, AR.CORNER],
         "69": [AR.SU, AR.SPLIT, AR.SPLIT],
         // medium
+        "77": [AR.SPLIT, AR.SU, AR.CORNER, AR.SPLIT],
+        "88": [AR.CORNER, AR.SPLIT, AR.CORNER, AR.SPLIT, AR.SPLIT, AR.SIXL, AR.STREET, AR.SIXL],
+        "100": [AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.CORNER, AR.CORNER, AR.CORNER, AR.CORNER],
+        "86": [AR.SU, AR.SPLIT, AR.SPLIT, AR.SPLIT],
+        "67": [AR.CORNER, AR.CORNER, AR.CORNER, AR.CORNER, AR.SU],
         "103": [AR.SU, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.SPLIT],
         "102": [AR.SU, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.CORNER, AR.CORNER],
         // large
+        "135": [AR.SU, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.CORNER, AR.CORNER, AR.CORNER, AR.CORNER],
         "165": [AR.SU, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.SPLIT, AR.STREET, AR.STREET, AR.STREET, AR.CORNER, AR.CORNER, AR.CORNER, AR.SIXL]
     },
     get(...keys) {
         return keys.flatMap((key) => this.pbs[key] || [])
     }
-}
-
-function add_chip(parent, x, y, radius, count) {
-    add_element(parent,
-        'circle',
-        null,
-        { class: "outer", cx: x, cy: y, r: radius, pathLength: 40 },
-        'http://www.w3.org/2000/svg')
-    add_element(parent,
-        'circle',
-        null,
-        { class: "inner", cx: x, cy: y, r: radius - 0.3 * radius, pathLength: 29 },
-        'http://www.w3.org/2000/svg')
-    add_element(parent,
-        'text',
-        `${count}`,
-        { class: "chip", x: x, y: y },
-        'http://www.w3.org/2000/svg')
-}
-
-function handle_answer(event) {
-    const _this = event.target
-    if (parseInt(document.getElementById("modal_payout").textContent) == state.view.get_payout()) {
-        _this.classList.add('correct')
-        document.getElementById("modal_input").disabled = true
-        document.getElementById('next').removeAttribute('hidden')
-    } else {
-        _this.classList.add('incorrect')
-        state.mistakes++
-    }
-}
-
-function handle_next() {
-    document.getElementById('next').setAttribute('hidden', 'hidden')
-    document.getElementById('modal_input').disabled = false
-    close_modal()
-    clear()
-    state.index++
-    if (state.game_should_end()) {
-        // results
-        const average_time = state.average_delta_time()
-        const accuracy = (state.views.length - state.mistakes) / state.views.length
-        sessionStorage.setItem("total", `${state.views.length}`)
-        sessionStorage.setItem("average", `${average_time.toFixed(2)} s`)
-        sessionStorage.setItem("accuracy", `${parseInt(100 * accuracy)} %`)
-        window.location.href = 'result.html'
-        return
-    }
-    state.delta_time(Date.now())
-    set_up()
-}
-
-function open_modal() {
-    document.getElementById("modal").style.display = "block"
-    document.getElementById("modal_input").focus()
-
-    document.getElementById("answer").disabled = true
-}
-
-function close_modal(though_peek = false) {
-    document.getElementById("modal").style.display = "none"
-    if (!though_peek) { answer.disabled = false }
-}
-
-function update_counter() {
-    const counter = document.getElementById('counter')
-    counter.textContent = `${state.index + 1}/${state.views.length}`
 }
 
 class Point {
@@ -559,84 +487,8 @@ class View {
         console.assert(same_type_positions.length > 0, `ERROR in place_flat: trying to place position of payout value of ${position} \nMight be trying to place sixline on Zero`)
 
         // sort by how many chips are on a specific position (ascending) and add the first one
-        chip_array.push(same_type_positions.toSorted((a, b) => a.count(chip_array) -
-            b.count(chip_array))[0])
+        chip_array.push(same_type_positions.toSorted((a, b) => a.count(chip_array) - b.count(chip_array))[0])
     }
 
 }
-function set_up() {
-    const table = document.getElementById("table")
-    update_counter()
-
-    state.view.rectangles.forEach((rectangle) => {
-        add_element(table,
-            rectangle.number == 0 ? "polygon" : "rect",
-            null,
-            rectangle.to_svg_rect(),
-            "http://www.w3.org/2000/svg")
-        if (rectangle.number != null) {
-            add_element(table,
-                "text",
-                rectangle.number,
-                rectangle.to_svg_text(),
-                "http://www.w3.org/2000/svg")
-        }
-    }
-    )
-
-    state.view.chips.forEach((chip, chip_index, chip_array) => {
-        // if chip is at the top
-        if (!chip_array.slice(chip_index + 1).includes(chip)) {
-            add_chip(document.getElementById("table"), chip.x, chip.y, .9, chip.count(chip_array))
-        }
-    })
-
-    const modal = document.getElementById("modal")
-    const modal_close = document.getElementById("close")
-    const modal_input = document.getElementById("modal_input")
-    const modal_peek = document.getElementById("modal_peek")
-    const modal_payout = document.getElementById("modal_payout")
-    const modal_check = document.getElementById("modal_check")
-
-    document.getElementById('modal_input').value = ""
-    document.getElementById('modal_payout').innerHTML = 0
-
-    modal_input.oninput = (event) => {
-        modal_payout.innerHTML = modal_input.value
-        if (modal_check.classList.length > 0) { remove_classes(modal_check, ["correct", "incorrect"]) }
-    }
-
-    modal_close.onclick = (event) => {
-        close_modal()
-    }
-    window.onclick = (event) => {
-        if (event.target == modal) {
-            close_modal()
-        }
-    }
-    // Hide modal while button is held
-    modal_peek.addEventListener("mousedown", () => {
-        close_modal(true)
-    });
-
-    // Show modal again on release (mouseup anywhere on document)
-    document.addEventListener("mouseup", () => {
-        if (answer.disabled == true) {
-            open_modal()
-        }
-    })
-    // populate_buttons(state.view.get_payout())
-    state.tick = Date.now()
-}
-function clear() {
-    const table = document.getElementById('table')
-    const modal_input = document.getElementById('modal_input')
-    remove_children(table, 'rect')
-    remove_children(table, 'circle')
-    remove_children(table, 'text')
-    remove_children(table, 'polygon')
-    // remove_children(buttons, 'button')
-    remove_classes(modal_check, ["correct", "incorrect"])
-}
-
-export { AR, POSITION, View, state, PICTURE_BETS as picture_bets, set_up, handle_next, handle_answer, open_modal, add_chip }
+export { AR, POSITION, View, PICTURE_BETS }

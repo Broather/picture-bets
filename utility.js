@@ -39,7 +39,8 @@ export function add_element(parent, child_type, text = null, attributes = null, 
     if (text != null) {
         element.textContent = text
     }
-    parent.appendChild(element)
+    if (parent) { parent.appendChild(element) }
+    return element
 }
 
 export function remove_children(parent, type) {
