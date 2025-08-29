@@ -70,8 +70,17 @@ polygon {
 circle {
     fill: var(--chip_color);
     stroke: white;
-    stroke-width: .05px;
-    stroke-dasharray: .07;
+
+}
+
+circle.outer {
+    stroke-dasharray: 1 2;
+    stroke-width: .2;
+}
+
+circle.inner {
+    stroke-dasharray: 1 1;
+    stroke-width: .05;
 }
 
 button:hover {

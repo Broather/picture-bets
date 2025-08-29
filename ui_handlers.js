@@ -1,8 +1,15 @@
-import { add_element, remove_children, add_chip } from "./utility.js"
+import { add_element, remove_children } from "./utility.js"
 
 const state = {
+    _id: -1,
     index: 0,
     views: [],
+    get id() {
+        return ++this._id
+    },
+    peek_id() {
+        return this._id
+    },
     get view() {
         return this.views[this.index]
     },
@@ -53,6 +60,38 @@ function handle_next() {
     state.delta_time(Date.now())
     set_up()
 }
+
+function add_chip(parent, x, y, radius, count) {
+    const mask = add_element(null,
+        'mask',
+        null,
+        { id: `circle_mask_${state.id}`, "mask-type": "luminance" },
+        'http://www.w3.org/2000/svg'
+    )
+    add_element(mask,
+        'circle',
+        null,
+        { cx: x, cy: y, r: radius, style: "fill: white; stroke: none" },
+        'http://www.w3.org/2000/svg')
+
+    parent.appendChild(mask)
+    add_element(parent,
+        'circle',
+        null,
+        { class: "outer", cx: x, cy: y, r: radius, pathLength: 40, mask: `url(#circle_mask_${state.peek_id()})` },
+        'http://www.w3.org/2000/svg')
+    add_element(parent,
+        'circle',
+        null,
+        { class: "inner", cx: x, cy: y, r: radius - 0.3 * radius, pathLength: 29 },
+        'http://www.w3.org/2000/svg')
+    add_element(parent,
+        'text',
+        `${count}`,
+        { class: "chip", x: x, y: y },
+        'http://www.w3.org/2000/svg')
+}
+
 function add_button(parent, text) {
     const button = document.createElement('button')
     button.textContent = text
@@ -80,7 +119,8 @@ function update_counter() {
 
 function clear() {
     const table = document.getElementById('table')
-    const buttons = document.getElementById('buttons')
+    // NOTE: important to remove mask elements before circles because they contain circle elements
+    remove_children(table, 'mask')
     remove_children(table, 'rect')
     remove_children(table, 'circle')
     remove_children(table, 'text')
@@ -122,4 +162,5 @@ function set_up() {
     state.tick = Date.now()
 }
 
-export { state, set_up, handle_next, update_counter, populate_buttons }
+
+export { state, set_up, handle_next, update_counter, populate_buttons, add_chip }

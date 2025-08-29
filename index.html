@@ -14,13 +14,7 @@
             <div class="center" style="width: fit-content;">
 
                 <span>Picture bets</span>
-                <svg width="100" height="100" viewBox="-1 -1 3 3" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Outer circle (rim) -->
-                    <circle cx="0" cy="0" r="1" />
-                    <circle cx="0" cy="0" r=".6" />
-
-                    <circle cx="1" cy="1" r="1" />
-                    <circle cx="1" cy="1" r=".6" />
+                <svg id="chip_splash" width="100" height="100" viewBox="0 0 3 3" xmlns="http://www.w3.org/2000/svg">
 
                 </svg>
                 <form id="form">
@@ -40,8 +34,13 @@
         </div>
     </body>
 
-    <script>
+    <script type="module">
+        import { add_chip } from "./ui_handlers.js"
+
         addEventListener('load', (event) => {
+            add_chip(document.getElementById("chip_splash"), 1, 1, .9, "")
+            add_chip(document.getElementById("chip_splash"), 1.3, 2, .9, "")
+            add_chip(document.getElementById("chip_splash"), 2.1, 1.1, .9, "")
             // set default value for pb_count
             document.getElementById('pb_count').value = sessionStorage.getItem('pb_count') || 10
             // set default value for chip_color

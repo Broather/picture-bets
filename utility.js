@@ -39,7 +39,8 @@ export function add_element(parent, child_type, text = null, attributes = null, 
     if (text != null) {
         element.textContent = text
     }
-    parent.appendChild(element)
+    if (parent) { parent.appendChild(element) }
+    return element
 }
 
 export function remove_children(parent, type) {
@@ -55,21 +56,4 @@ export function contains_alphanum(n) {
             (code > 96 && code < 123) // lower alpha (a-z)
         ) return true
     } return false
-}
-export function add_chip(parent, x, y, radius, count) {
-    add_element(parent,
-        'circle',
-        null,
-        { cx: x, cy: y, r: radius, stroke: "white", "stroke-width": 0.3, "stroke-dasharray": "0.3, 0.6" },
-        'http://www.w3.org/2000/svg',)
-    add_element(parent,
-        'circle',
-        null,
-        { cx: x, cy: y, r: radius - 0.3 * radius, stroke: "white", "stroke-width": 0.1, "stroke-dasharray": 0.25 },
-        'http://www.w3.org/2000/svg')
-    add_element(parent,
-        'text',
-        `${count}`,
-        { class: "chip", x: x, y: y },
-        'http://www.w3.org/2000/svg')
 }
