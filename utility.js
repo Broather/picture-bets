@@ -1,6 +1,6 @@
 export class Random {
     static pick_n(n, array, combination = false) {
-        console.assert(array.length != null, "Random.pick recieved argument with undefined length attribute")
+        console.assert(array.length != null, "Random.pick_n recieved argument with undefined length attribute")
         if (combination) {
             // TODO
             console.assert(false, "ERROR: no implementation")

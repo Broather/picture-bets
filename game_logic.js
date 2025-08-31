@@ -73,6 +73,11 @@ class Point {
     set_position(position) {
         this.position = position
     }
+    add(value) {
+        this.x += value
+        this.y += value
+        return this
+    }
     static multiple_set_position(array, ...values) {
         console.assert(array.length >= values.length,
             `in multiple_set_positions: too many values given. Array has ${array.length}, gave ${values.length}`)
@@ -93,7 +98,9 @@ class Rectangle {
 
     }
     get tl() { return new Point(this.x, this.y) }
+    get tl_w_padding() { return new Point(this.x + this.padding, this.y + this.padding) }
     get br() { return new Point(this.x + this.width, this.y + this.height) }
+    get br_w_padding() { return new Point(this.x + this.width - this.padding, this.y + this.height - this.padding) }
     get center() { return new Point(this.x + this.width / 2, this.y + this.height / 2) }
     ctrl_cv(direction, changes = {}) {
         let x, y, number
@@ -126,9 +133,12 @@ class Rectangle {
                 console.assert(false, "ERROR: unreachable")
                 break
         }
+        const dx = changes.dx !== undefined ? changes.dx : 0
+        const dy = changes.dy !== undefined ? changes.dy : 0
+
         return new Rectangle(
-            changes.x !== undefined ? changes.x : x,
-            changes.y !== undefined ? changes.y : y,
+            changes.x !== undefined ? changes.x + dx : x + dx,
+            changes.y !== undefined ? changes.y + dy : y + dy,
             changes.width !== undefined ? changes.width : this.width,
             changes.height !== undefined ? changes.height : this.height,
             changes.number !== undefined ? changes.number : number,
@@ -307,6 +317,32 @@ class Rectangle {
             Math.abs(bottomest_of_right.x - toppest_of_left.x), Math.abs(bottomest_of_right.y - toppest_of_left.y))
         Rectangle.set_style(previous_style)
         return result
+    }
+}
+class TempView {
+    constructor(payout) {
+        this.rectangles = []
+        this.chips = []
+        [stacks_count, _, _] = this.payout_to_layout(payout)
+        const chip_radius = 1
+        const chip_diameter = chip_radius * 2
+        Rectangle.set_padding(chip_radius)
+        const stacks_footprint = new Rectangle(0, chip_diameter * 9, chip_diameter * 4, chip_diameter * 4)
+        this.chips = layout_stacks(View.generate_matrix(stacks.tl_w_padding, stacks.br_w_padding, 4, 4), stacks_count)
+        const additional = stacks_footprint.ctrl_cv(DIRECTION.RIGHT, { dx: chip_diameter })
+        // this.chips = this.chips.concat(View.generate_matrix(additional.tl_w_padding, additional.br_w_padding, 4, 4))
+        const wipe = additional.ctrl_cv(DIRECTION.RIGHT, { dx: chip_diameter * 2, width: chip_diameter * 3, height: chip_diameter * 3 })
+        // this.chips = this.chips.concat(View.generate_matrix(wipe.tl_w_padding, wipe.br_w_padding, 3, 3))
+
+    }
+    payout_to_layout(payout) {
+        const stacks = Math.floor(payout / 20) + (payout % 20 >= 14 ? 1 : 0)
+        const additional = payout % 20 <= 13 ? payout % 20 : 0
+        const wipe = payout % 20 >= 14 ? 20 - payout % 20 : 0
+        return [stacks, additional, wipe]
+    }
+    layout_stacks(grid, count) {
+        // TODO: implement
     }
 }
 class View {
@@ -491,4 +527,4 @@ class View {
     }
 
 }
-export { AR, POSITION, View, PICTURE_BETS }
+export { AR, POSITION, View, TempView, PICTURE_BETS }

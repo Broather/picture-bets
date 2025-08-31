@@ -46,21 +46,23 @@ function handle_multiple_choice(event) {
 
 function handle_modal_check(event) {
     const _this = event.target
-    if (parseInt(document.getElementById("modal_payout").textContent) == state.view.get_payout()) {
+    if (parseInt(document.getElementById("modal_input").value) == state.view.get_payout()) {
         _this.classList.add('correct')
         document.getElementById("modal_input").disabled = true
         document.getElementById('next').removeAttribute('hidden')
     } else {
-        _this.classList.add('incorrect')
+        // TODO: count mistakes in an array of 1s and make it a 0 if we make it to this code branch
         state.mistakes++
+        _this.classList.add('incorrect')
     }
 }
 
 function handle_next() {
     document.getElementById('next').setAttribute('hidden', 'hidden')
-    document.getElementById('modal_input').disabled = false
     close_modal()
-    clear()
+    document.getElementById('modal_input').disabled = false
+    document.getElementById('modal_input').value = ""
+    knock_em_down(document.getElementById("table"))
     state.index++
     if (state.game_should_end()) {
         // results
@@ -73,7 +75,7 @@ function handle_next() {
         return
     }
     state.delta_time(Date.now())
-    set_up()
+    build_em_up(document.getElementById("table"), state.view)
 }
 
 function open_modal() {
@@ -144,32 +146,17 @@ function update_counter() {
     counter.textContent = `${state.index + 1}/${state.views.length}`
 }
 
-function clear() {
-    const table = document.getElementById('table')
-    const modal_check = document.getElementById("modal_check")
-    // NOTE: important to remove mask elements before circles because they contain circle elements
-    remove_children(table, 'mask')
-    remove_children(table, 'rect')
-    remove_children(table, 'circle')
-    remove_children(table, 'text')
-    remove_children(table, 'polygon')
-    // remove_children(buttons, 'button')
-    remove_classes(modal_check, ["correct", "incorrect"])
-}
-
-function set_up() {
-    const table = document.getElementById("table")
-    document.getElementById("next").onclick = handle_next
+function build_em_up(svg_target, view) {
     update_counter()
 
-    state.view.rectangles.forEach((rectangle) => {
-        add_element(table,
+    view.rectangles.forEach((rectangle) => {
+        add_element(svg_target,
             rectangle.number == 0 ? "polygon" : "rect",
             null,
             rectangle.to_svg_rect(),
             "http://www.w3.org/2000/svg")
         if (rectangle.number != null) {
-            add_element(table,
+            add_element(svg_target,
                 "text",
                 rectangle.number,
                 rectangle.to_svg_text(),
@@ -178,44 +165,44 @@ function set_up() {
     }
     )
 
-    state.view.chips.forEach((chip, chip_index, chip_array) => {
+    view.chips.forEach((chip, chip_index, chip_array) => {
         // if chip is at the top
         if (!chip_array.slice(chip_index + 1).includes(chip)) {
-            add_chip(document.getElementById("table"), chip.x, chip.y, .9, chip.count(chip_array))
+            add_chip(svg_target, chip.x, chip.y, 1, chip.count(chip_array))
         }
     })
 
-    set_up_modal()
     // populate_buttons(state.view.get_payout())
     state.tick = Date.now()
 }
 
-function set_up_modal() {
-    const modal = document.getElementById("modal")
-    const modal_close = document.getElementById("close")
-    const modal_input = document.getElementById("modal_input")
-    const modal_peek = document.getElementById("modal_peek")
-    const modal_payout = document.getElementById("modal_payout")
+function knock_em_down(svg_target) {
     const modal_check = document.getElementById("modal_check")
+    // NOTE: important to remove mask elements before circles because they contain circle elements
+    remove_children(svg_target, 'mask')
+    remove_children(svg_target, 'rect')
+    remove_children(svg_target, 'circle')
+    remove_children(svg_target, 'text')
+    remove_children(svg_target, 'polygon')
+    // remove_children(buttons, 'button')
+    remove_classes(modal_check, ["correct", "incorrect"])
+}
 
-    document.getElementById('modal_input').value = ""
-    document.getElementById('modal_payout').innerHTML = 0
 
-    modal_input.oninput = (event) => {
-        modal_payout.innerHTML = modal_input.value
-        if (modal_check.classList.length > 0) { remove_classes(modal_check, ["correct", "incorrect"]) }
-    }
+function set_modal_event_listeners() {
+    const modal_check = document.getElementById("modal_check")
+    modal_check.onclick = handle_modal_check
 
-    modal_close.onclick = (event) => {
+    document.getElementById("close").onclick = (event) => {
         close_modal()
     }
     window.onclick = (event) => {
-        if (event.target == modal) {
+        if (event.target == document.getElementById("modal")) {
             close_modal()
         }
     }
     // Hide modal while button is held
-    modal_peek.addEventListener("mousedown", () => {
+    document.getElementById("modal_peek").addEventListener("mousedown", () => {
         close_modal(true)
     })
 
@@ -227,4 +214,4 @@ function set_up_modal() {
     })
 }
 
-export { state, set_up, handle_next, handle_modal_check as handle_modal, open_modal, update_counter, add_chip }
+export { state, build_em_up, knock_em_down, handle_next, set_modal_event_listeners, open_modal, update_counter, add_chip }
