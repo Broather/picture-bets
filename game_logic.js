@@ -24,7 +24,11 @@ const DIRECTION = {
     DOWN: "DOWN",
     LEFT: "LEFT",
     RIGHT: "RIGHT",
-    TOWARDS_USER: "TOWARDS_USER"
+    TOWARDS_USER: "TOWARDS_USER",
+    TOP_RIGHT: "TOP_RIGHT",
+    TOP_LEFT: "TOP_LEFT",
+    BOTTOM_RIGHT: "BOTTOM_RIGHT",
+    BOTTOM_LEFT: "BOTTOM_LEFT",
 }
 const PICTURE_BETS = {
     pbs: {
@@ -103,34 +107,35 @@ class Rectangle {
     get br_w_padding() { return new Point(this.x + this.width - this.padding, this.y + this.height - this.padding) }
     get center() { return new Point(this.x + this.width / 2, this.y + this.height / 2) }
     ctrl_cv(direction, changes = {}) {
-        let x, y, number
+        // new coordinates and difference from old number to new
+        let x, y, d_number
         switch (direction) {
             case DIRECTION.UP:
                 x = this.x
                 y = this.y - this.height
-                number = !contains_alphanum(this.number) ? parseInt(this.number - 1) : this.number
+                d_number = - 1
                 break
             case DIRECTION.DOWN:
                 x = this.x
                 y = this.y + this.height
-                number = !contains_alphanum(this.number) ? parseInt(this.number + 1) : this.number
+                d_number = + 1
                 break
             case DIRECTION.LEFT:
                 x = this.x - this.width
                 y = this.y
-                number = !contains_alphanum(this.number) ? parseInt(this.number + 3) : this.number
+                d_number = + 3
                 break
             case DIRECTION.RIGHT:
                 x = this.x + this.width
                 y = this.y
-                number = !contains_alphanum(this.number) ? parseInt(this.number - 3) : this.number
+                d_number = - 3
                 break
             case DIRECTION.TOWARDS_USER:
                 x = this.x
                 y = this.y
-                number = this.number
+                d_number = 0
             default:
-                console.assert(false, "ERROR: unreachable")
+                console.assert(false, "ERROR: unrecognised direction")
                 break
         }
         const dx = changes.dx !== undefined ? changes.dx : 0
@@ -141,7 +146,7 @@ class Rectangle {
             changes.y !== undefined ? changes.y + dy : y + dy,
             changes.width !== undefined ? changes.width : this.width,
             changes.height !== undefined ? changes.height : this.height,
-            changes.number !== undefined ? changes.number : number,
+            changes.number !== undefined ? changes.number : this.number + d_number,
         )
     }
     // for quickly making `count` Rectangles
@@ -319,17 +324,103 @@ class Rectangle {
         return result
     }
 }
+class Stack {
+    static chip_radius = 1
+    static chip_diameter = 2
+    constructor(x, y, count) {
+        this.x = x
+        this.y = y
+        this.count = count
+    }
+    add(value) {
+        this.count += value
+    }
+    ctrl_cv(direction, changes = {}) {
+        // TODO: add diagonal directions
+        let x, y
+        switch (direction) {
+            case DIRECTION.UP:
+                x = this.x
+                y = this.y - Stack.chip_diameter
+                break
+            case DIRECTION.DOWN:
+                x = this.x
+                y = this.y + Stack.chip_diameter
+                break
+            case DIRECTION.LEFT:
+                x = this.x - Stack.chip_diameter
+                y = this.y
+                break
+            case DIRECTION.RIGHT:
+                x = this.x + Stack.chip_diameter
+                y = this.y
+                break
+            case DIRECTION.TOWARDS_USER:
+                console.assert(false, "ERROR: no implementation")
+                break
+            case DIRECTION.TOP_RIGHT:
+                x = this.x + Stack.chip_radius
+                y = this.y - .85 * Stack.chip_diameter
+                break
+            case DIRECTION.TOP_LEFT:
+                x = this.x - Stack.chip_radius
+                y = this.y - .85 * Stack.chip_diameter
+                break
+            case DIRECTION.BOTTOM_RIGHT:
+                x = this.x + Stack.chip_radius
+                y = this.y + .85 * Stack.chip_diameter
+                break
+            case DIRECTION.BOTTOM_LEFT:
+                x = this.x - Stack.chip_radius
+                y = this.y + .85 * Stack.chip_diameter
+                break
+            default:
+                console.assert(false, "ERROR: unrecognised direction")
+                break
+        }
+        const dx = changes.dx !== undefined ? changes.dx : 0
+        const dy = changes.dy !== undefined ? changes.dy : 0
+
+        return new Stack(
+            changes.x !== undefined ? changes.x + dx : x + dx,
+            changes.y !== undefined ? changes.y + dy : y + dy,
+            changes.count !== undefined ? changes.count : this.count,
+        )
+    }
+    realise() {
+        const p = new Point(this.x, this.y)
+        return Array.from({ length: this.count }, (_) => p)
+    }
+}
 class TempView {
     constructor(payout) {
-        this.rectangles = []
-        this.chips = []
-        [stacks_count, _, _] = this.payout_to_layout(payout)
         const chip_radius = 1
         const chip_diameter = chip_radius * 2
+
+        this.rectangles = []
+        this.chips = []
+        let stacks_count, addi_count, wipe_count
+        [stacks_count, addi_count, wipe_count] = this.payout_to_layout(payout)
+
         Rectangle.set_padding(chip_radius)
-        const stacks_footprint = new Rectangle(0, chip_diameter * 9, chip_diameter * 4, chip_diameter * 4)
-        this.chips = layout_stacks(View.generate_matrix(stacks.tl_w_padding, stacks.br_w_padding, 4, 4), stacks_count)
-        const additional = stacks_footprint.ctrl_cv(DIRECTION.RIGHT, { dx: chip_diameter })
+        // stacks
+        const stack_footprint = new Rectangle(0, chip_diameter * 9, chip_diameter * 4, chip_diameter * 4)
+        const stacks = this.layout_stacks(stack_footprint, stacks_count)
+
+        if (stacks.length > 0) {
+            function y_asc_x_desc(a, b) {
+                if (a.y == b.y) {
+                    return b.x - a.x
+                }
+                return a.y - b.y
+            }
+            // primarily sorts by y ascending, if same y: sorts by x descending
+            const wipe_stack = stacks.toSorted(y_asc_x_desc)[0]
+            wipe_stack.add(-wipe_count)
+        }
+
+        this.chips = stacks.flatMap((s) => s.realise())
+        const additional = stack_footprint.ctrl_cv(DIRECTION.RIGHT, { dx: chip_diameter })
         // this.chips = this.chips.concat(View.generate_matrix(additional.tl_w_padding, additional.br_w_padding, 4, 4))
         const wipe = additional.ctrl_cv(DIRECTION.RIGHT, { dx: chip_diameter * 2, width: chip_diameter * 3, height: chip_diameter * 3 })
         // this.chips = this.chips.concat(View.generate_matrix(wipe.tl_w_padding, wipe.br_w_padding, 3, 3))
@@ -341,8 +432,30 @@ class TempView {
         const wipe = payout % 20 >= 14 ? 20 - payout % 20 : 0
         return [stacks, additional, wipe]
     }
-    layout_stacks(grid, count) {
-        // TODO: implement
+    layout_stacks(footprint, count) {
+        const result = []
+        const center = new Stack(footprint.center.x, footprint.center.y, 20)
+        switch (count) {
+            case 1:
+                result.push(center)
+                break;
+            case 2:
+                result.push(center.ctrl_cv(DIRECTION.DOWN, { dy: -Stack.chip_radius }))
+                result.push(center.ctrl_cv(DIRECTION.UP, { dy: +Stack.chip_radius }))
+                break;
+            case 3:
+                const bottom = center.ctrl_cv(DIRECTION.DOWN, { dy: -Stack.chip_radius })
+                result.push(bottom, bottom.ctrl_cv(DIRECTION.TOP_LEFT), bottom.ctrl_cv(DIRECTION.TOP_RIGHT))
+                break;
+            case 4:
+                const right = center.ctrl_cv(DIRECTION.RIGHT, { dx: -Stack.chip_radius })
+                const left = center.ctrl_cv(DIRECTION.LEFT, { dx: +Stack.chip_radius })
+                result.push(right, left)
+                result.push(right.ctrl_cv(DIRECTION.BOTTOM_LEFT), left.ctrl_cv(DIRECTION.TOP_RIGHT))
+            default:
+                break;
+        }
+        return result
     }
 }
 class View {
