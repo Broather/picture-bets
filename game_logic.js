@@ -146,7 +146,7 @@ class Rectangle {
             changes.y !== undefined ? changes.y + dy : y + dy,
             changes.width !== undefined ? changes.width : this.width,
             changes.height !== undefined ? changes.height : this.height,
-            changes.number !== undefined ? changes.number : this.number + d_number,
+            changes.number !== undefined ? changes.number : contains_alphanum(this.number) ? this.number : this.number + d_number,
         )
     }
     // for quickly making `count` Rectangles
@@ -356,7 +356,8 @@ class Stack {
                 y = this.y
                 break
             case DIRECTION.TOWARDS_USER:
-                console.assert(false, "ERROR: no implementation")
+                x = this.x
+                y = this.y
                 break
             case DIRECTION.TOP_RIGHT:
                 x = this.x + Stack.chip_radius
@@ -386,6 +387,14 @@ class Stack {
             changes.y !== undefined ? changes.y + dy : y + dy,
             changes.count !== undefined ? changes.count : this.count,
         )
+    }
+    array(direction, count) {
+        const result = [this]
+        for (let i = 0; i < count - 1; i++) {
+            let last = result[result.length - 1]
+            result.push(last.ctrl_cv(direction))
+        }
+        return result
     }
     realise() {
         const p = new Point(this.x, this.y)
@@ -424,34 +433,64 @@ class TempView {
         // this.chips = this.chips.concat(View.generate_matrix(additional.tl_w_padding, additional.br_w_padding, 4, 4))
         const wipe = additional.ctrl_cv(DIRECTION.RIGHT, { dx: chip_diameter * 2, width: chip_diameter * 3, height: chip_diameter * 3 })
         // this.chips = this.chips.concat(View.generate_matrix(wipe.tl_w_padding, wipe.br_w_padding, 3, 3))
-
     }
     payout_to_layout(payout) {
         const stacks = Math.floor(payout / 20) + (payout % 20 >= 14 ? 1 : 0)
         const additional = payout % 20 <= 13 ? payout % 20 : 0
         const wipe = payout % 20 >= 14 ? 20 - payout % 20 : 0
+        // console.log([stacks, additional, wipe])
         return [stacks, additional, wipe]
     }
     layout_stacks(footprint, count) {
         const result = []
+        // used by 1 and 2
         const center = new Stack(footprint.center.x, footprint.center.y, 20)
+        // used by 3,4,5,6
+        const bottom = center.ctrl_cv(DIRECTION.DOWN, { dy: -Stack.chip_radius })
+        const right = bottom.ctrl_cv(DIRECTION.TOP_RIGHT)
+        // used by 7 and 8
+        const directions = [DIRECTION.TOWARDS_USER, DIRECTION.TOP_LEFT, DIRECTION.TOP_RIGHT, DIRECTION.RIGHT, DIRECTION.BOTTOM_RIGHT, DIRECTION.BOTTOM_LEFT, DIRECTION.LEFT]
+        // used by 9 and 10
+        const bottom_leftest = center.ctrl_cv(DIRECTION.BOTTOM_LEFT, { dx: -Stack.chip_diameter })
+        let left_side
         switch (count) {
             case 1:
                 result.push(center)
-                break;
+                break
             case 2:
-                result.push(center.ctrl_cv(DIRECTION.DOWN, { dy: -Stack.chip_radius }))
-                result.push(center.ctrl_cv(DIRECTION.UP, { dy: +Stack.chip_radius }))
-                break;
+                result.push(...bottom.array(DIRECTION.UP, 2))
+                break
             case 3:
-                const bottom = center.ctrl_cv(DIRECTION.DOWN, { dy: -Stack.chip_radius })
                 result.push(bottom, bottom.ctrl_cv(DIRECTION.TOP_LEFT), bottom.ctrl_cv(DIRECTION.TOP_RIGHT))
-                break;
+                break
             case 4:
-                const right = center.ctrl_cv(DIRECTION.RIGHT, { dx: -Stack.chip_radius })
-                const left = center.ctrl_cv(DIRECTION.LEFT, { dx: +Stack.chip_radius })
-                result.push(right, left)
-                result.push(right.ctrl_cv(DIRECTION.BOTTOM_LEFT), left.ctrl_cv(DIRECTION.TOP_RIGHT))
+                result.push(...bottom.array(DIRECTION.TOP_LEFT, 2), ...right.array(DIRECTION.TOP_LEFT, 2))
+                break
+            case 5:
+                result.push(...bottom.array(DIRECTION.TOP_LEFT, 3), ...right.array(DIRECTION.TOP_LEFT, 2))
+                break
+            case 6:
+                result.push(...bottom.array(DIRECTION.TOP_LEFT, 3), ...right.array(DIRECTION.TOP_LEFT, 3))
+                break
+            case 7:
+                directions.map((d) => result.push(center.ctrl_cv(d)))
+                break
+            case 8:
+                result.push(...center.ctrl_cv(DIRECTION.TOP_RIGHT).array(DIRECTION.TOP_LEFT, 2))
+                directions.map((d) => { if (d !== DIRECTION.TOP_RIGHT) result.push(center.ctrl_cv(d)) })
+                break
+            case 9:
+                left_side = bottom_leftest.array(DIRECTION.TOP_RIGHT, 3)
+                for (let i = 0; i < left_side.length; i++) {
+                    result.push(...left_side[i].array(DIRECTION.RIGHT, 4 - i))
+                }
+                break
+            case 10:
+                left_side = bottom_leftest.array(DIRECTION.TOP_RIGHT, 4)
+                for (let i = 0; i < left_side.length; i++) {
+                    result.push(...left_side[i].array(DIRECTION.RIGHT, 4 - i))
+                }
+                break
             default:
                 break;
         }
