@@ -77,9 +77,24 @@ class Point {
     set_position(position) {
         this.position = position
     }
-    add(value) {
-        this.x += value
-        this.y += value
+    scale(x_or_value, y = null) {
+        if (y) {
+            this.x *= x_or_value
+            this.y *= y
+        } else {
+            this.x *= x_or_value
+            this.y *= x_or_value
+        }
+        return this
+    }
+    add(x_or_value, y = null) {
+        if (y) {
+            this.x += x_or_value
+            this.y += y
+        } else {
+            this.x += x_or_value
+            this.y += x_or_value
+        }
         return this
     }
     static multiple_set_position(array, ...values) {
@@ -335,6 +350,16 @@ class Stack {
     add(value) {
         this.count += value
     }
+    open(direction = DIRECTION.BOTTOM_RIGHT) {
+        // TODO: make DIRECTION a map of point objects and use them as unit vectors
+        // for implicity's sake assumes direction is always BOTTOM_RIGHT
+        const result = []
+        const vector = new Point(1, 1).scale(Stack.chip_radius)
+        for (let i = 0; i < this.count; i++) {
+            result.push(new Stack(this.x + vector.x * i, this.y + vector.y * i, 1))
+        }
+        return result
+    }
     ctrl_cv(direction, changes = {}) {
         // TODO: add diagonal directions
         let x, y
@@ -388,17 +413,20 @@ class Stack {
             changes.count !== undefined ? changes.count : this.count,
         )
     }
-    array(direction, count) {
+    array(direction, count, changes = {}) {
         const result = [this]
         for (let i = 0; i < count - 1; i++) {
             let last = result[result.length - 1]
-            result.push(last.ctrl_cv(direction))
+            result.push(last.ctrl_cv(direction, changes))
         }
         return result
     }
     realise() {
         const p = new Point(this.x, this.y)
         return Array.from({ length: this.count }, (_) => p)
+    }
+    static open_last(stacks, direction = DIRECTION.BOTTOM_RIGHT) {
+        return stacks.slice(0, -1).concat(stacks[stacks.length - 1].open(direction))
     }
 }
 class TempView {
@@ -429,10 +457,13 @@ class TempView {
         }
 
         this.chips = stacks.flatMap((s) => s.realise())
-        const additional = stack_footprint.ctrl_cv(DIRECTION.RIGHT, { dx: chip_diameter })
-        // this.chips = this.chips.concat(View.generate_matrix(additional.tl_w_padding, additional.br_w_padding, 4, 4))
-        const wipe = additional.ctrl_cv(DIRECTION.RIGHT, { dx: chip_diameter * 2, width: chip_diameter * 3, height: chip_diameter * 3 })
+        const additional_footprint = stack_footprint.ctrl_cv(DIRECTION.RIGHT, { dx: chip_diameter })
+        this.chips = this.chips.concat(this.layout_additional(additional_footprint, addi_count).flatMap((s) => s.realise()))
+
+        const wipe_footprint = additional_footprint.ctrl_cv(DIRECTION.RIGHT, { dx: chip_diameter * 2, width: chip_diameter * 3, height: chip_diameter * 3 })
+        this.chips = this.chips.concat(this.layout_wipe(wipe_footprint, wipe_count).flatMap((s) => s.realise()))
         // this.chips = this.chips.concat(View.generate_matrix(wipe.tl_w_padding, wipe.br_w_padding, 3, 3))
+        // console.log(this.chips)
     }
     payout_to_layout(payout) {
         const stacks = Math.floor(payout / 20) + (payout % 20 >= 14 ? 1 : 0)
@@ -440,6 +471,24 @@ class TempView {
         const wipe = payout % 20 >= 14 ? 20 - payout % 20 : 0
         // console.log([stacks, additional, wipe])
         return [stacks, additional, wipe]
+    }
+    layout_wipe(footprint, count) {
+        const result = []
+        const center = new Stack(footprint.center.x, footprint.center.y, 20)
+        const wipe = center.ctrl_cv(DIRECTION.BOTTOM_LEFT, { dx: -Stack.chip_radius, dy: -Stack.chip_radius, count: count <= 5 ? count : Math.floor(count / 2) })
+        result.push(...wipe.array(DIRECTION.TOP_RIGHT, count <= 5 ? 1 : 2, { dx: Stack.chip_radius }).flatMap((s) => s.open()))
+        return result
+    }
+    layout_additional(footprint, count) {
+        const result = []
+        const center = new Stack(footprint.center.x, footprint.center.y, 20)
+        const main = center.ctrl_cv(DIRECTION.TOP_LEFT, { dx: -Stack.chip_radius, dy: -Stack.chip_radius, count: count <= 5 ? count : Math.min(Math.floor(count / 2), 5) })
+        const side = center.ctrl_cv(DIRECTION.TOP_RIGHT, { dx: Stack.chip_radius, dy: -Stack.chip_radius, count: count <= 5 ? 0 : count < 10 ? count % 2 : count % 10 })
+
+        result.push(...side.open(), ...Stack.open_last(main.array(DIRECTION.BOTTOM_RIGHT, count <= 5 ? 1 : 2)))
+        console.log(result)
+        return result
+
     }
     layout_stacks(footprint, count) {
         const result = []
