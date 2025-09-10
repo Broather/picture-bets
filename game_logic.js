@@ -430,7 +430,9 @@ class Stack {
     }
 }
 class TempView {
-    constructor(payout) {
+    constructor(input_payout) {
+        const overflow = input_payout < 214 ? 0 : 200 * Math.floor((input_payout - 14) / 200)
+        const payout = input_payout - overflow
         const chip_radius = 1
         const chip_diameter = chip_radius * 2
 
@@ -464,6 +466,9 @@ class TempView {
         this.chips = this.chips.concat(this.layout_wipe(wipe_footprint, wipe_count).flatMap((s) => s.realise()))
         // this.chips = this.chips.concat(View.generate_matrix(wipe.tl_w_padding, wipe.br_w_padding, 3, 3))
         // console.log(this.chips)
+        if (overflow > 0) {
+            this.rectangles.push(additional_footprint.ctrl_cv(DIRECTION.UP, { number: `+${overflow} chips` }))
+        }
     }
     payout_to_layout(payout) {
         const stacks = Math.floor(payout / 20) + (payout % 20 >= 14 ? 1 : 0)
@@ -486,7 +491,7 @@ class TempView {
         const side = center.ctrl_cv(DIRECTION.TOP_RIGHT, { dx: Stack.chip_radius, dy: -Stack.chip_radius, count: count <= 5 ? 0 : count < 10 ? count % 2 : count % 10 })
 
         result.push(...side.open(), ...Stack.open_last(main.array(DIRECTION.BOTTOM_RIGHT, count <= 5 ? 1 : 2)))
-        console.log(result)
+        // console.log(result)
         return result
 
     }

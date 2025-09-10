@@ -50,6 +50,7 @@ function handle_modal_check(event) {
         _this.classList.add('correct')
         document.getElementById("modal_input").disabled = true
         document.getElementById('next').removeAttribute('hidden')
+        document.getElementById('next').focus()
     } else {
         // TODO: count mistakes in an array of 1s and make it a 0 if we make it to this code branch
         state.mistakes++
@@ -76,18 +77,18 @@ function handle_next() {
     }
     state.delta_time(Date.now())
     build_em_up(document.getElementById("table"), state.view)
+    document.getElementById("answer").focus()
 }
 
 function open_modal() {
     document.getElementById("modal").style.display = "block"
     document.getElementById("modal_input").focus()
-
     document.getElementById("answer").disabled = true
 }
 
-function close_modal(though_peek = false) {
+function close_modal(through_peek = false) {
     document.getElementById("modal").style.display = "none"
-    if (!though_peek) { answer.disabled = false }
+    if (!through_peek) { answer.disabled = false }
 }
 
 function add_chip(parent, x, y, radius, count) {
@@ -189,9 +190,14 @@ function knock_em_down(svg_target) {
 }
 
 
-function set_modal_event_listeners() {
-    const modal_check = document.getElementById("modal_check")
-    modal_check.onclick = handle_modal_check
+function set_modal_event_listeners(ModalViewClass) {
+    document.getElementById("modal_input").oninput = (event) => {
+        knock_em_down(document.getElementById("track"))
+        build_em_up(document.getElementById("track"), new ModalViewClass(event.target.value))
+    }
+
+    document.getElementById("modal_input").onsubmit = handle_modal_check
+    document.getElementById("modal_check").onclick = handle_modal_check
 
     document.getElementById("close").onclick = (event) => {
         close_modal()
@@ -205,10 +211,18 @@ function set_modal_event_listeners() {
     document.getElementById("modal_peek").addEventListener("mousedown", () => {
         close_modal(true)
     })
+    document.getElementById("modal_peek").addEventListener("touchstart", () => {
+        close_modal(true)
+    })
 
     // Show modal again on release (mouseup anywhere on document)
     document.addEventListener("mouseup", () => {
-        if (answer.disabled == true) {
+        if (document.getElementById("answer").disabled == true) {
+            open_modal()
+        }
+    })
+    document.addEventListener("touchend", () => {
+        if (document.getElementById("answer").disabled == true) {
             open_modal()
         }
     })

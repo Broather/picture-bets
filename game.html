@@ -37,11 +37,11 @@
             <div class="modal-content">
                 <span id="close" class="close">&times;</span>
                 <svg id="track" viewbox="0 0 28 28">
-                    <!-- <rect x="0" y="0" width="25" height="25" />
-                    <text class="layout" id="modal_payout" x="12" y="12">0</text> -->
                 </svg>
-                <input class="center" id="modal_input" type="number">
-                <input class="big center" id="modal_check" type="submit" value="Check">
+                <form id="form">
+                    <input class="center" id="modal_input" type="number" required>
+                    <input class="big center" id="modal_check" type="submit" value="Check">
+                </form>
                 <div class="row">
                     <button class="big" id="next" hidden>Next</button>
                 </div>
@@ -56,16 +56,12 @@
         import { handle_next, open_modal, set_modal_event_listeners, state, build_em_up, knock_em_down } from "./ui_handlers.js"
         import { remove_classes } from "./utility.js"
 
+        document.getElementById("form").onsubmit = (event) => { event.preventDefault() }
+
         document.getElementById("next").onclick = handle_next
         document.getElementById("answer").onclick = open_modal
 
-        document.getElementById("modal_input").oninput = (event) => {
-            knock_em_down(document.getElementById("track"))
-            const modal_view = new TempView(parseInt(event.target.value))
-            build_em_up(document.getElementById("track"), modal_view)
-        }
-
-        set_modal_event_listeners()
+        set_modal_event_listeners(TempView)
 
         addEventListener('load', (event) => {
             document.documentElement.style.setProperty('--chip_color', sessionStorage.getItem('chip_color'))
@@ -74,6 +70,7 @@
             // first half is single picture bets and second half has combinations of 2 pbs
             state.views = [...View.generate_views(half, 1), ...View.generate_views(pb_count - half, 2)]
             build_em_up(document.getElementById("table"), state.view)
+            document.getElementById("answer").focus()
         })
 
     </script>

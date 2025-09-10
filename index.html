@@ -11,26 +11,21 @@
 
     <body>
         <div class="center">
-            <div class="center" style="width: fit-content;">
-
-                <span>Picture bets</span>
-                <svg id="chip_splash" width="100" height="100" viewBox="0 0 3 3" xmlns="http://www.w3.org/2000/svg">
-
-                </svg>
-                <form id="form">
-                    <ul>
-                        <li>
-                            <input type="number" min="1" max="69" step="1" name="pb_count" id="pb_count" required>
-                            <label for="common_pb">Amount of picture bets</label>
-                        </li>
-                        <li>
-                            <input type="color" name="chip_color" id="chip_color" required>
-                            <label for="common_pb">Chip color</label>
-                        </li>
-                    </ul>
-                    <input class="big center" type="submit" value="Play">
-                </form>
-            </div>
+            <span>Picture bets</span>
+            <svg id="chip_splash" width="100" height="100" viewBox="0 0 3 3" xmlns="http://www.w3.org/2000/svg"></svg>
+            <form id="form">
+                <ul>
+                    <li>
+                        <input type="number" min="1" max="69" step="1" name="pb_count" id="pb_count" required>
+                        <label for="pb_count">Amount of picture bets</label>
+                    </li>
+                    <li>
+                        <input type="color" name="chip_color" id="chip_color" required>
+                        <label for="chip_color">Chip color</label>
+                    </li>
+                </ul>
+                <input class="big center" type="submit" value="Play">
+            </form>
         </div>
     </body>
 
