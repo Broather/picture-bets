@@ -52,7 +52,7 @@
     </body>
 
     <script type="module">
-        import { View, TempView, POSITION } from "./game_logic.js"
+        import { View, ModalView, POSITION } from "./game_logic.js"
         import { handle_next, open_modal, set_modal_event_listeners, state, build_em_up, knock_em_down } from "./ui_handlers.js"
         import { remove_classes } from "./utility.js"
 
@@ -61,7 +61,7 @@
         document.getElementById("next").onclick = handle_next
         document.getElementById("answer").onclick = open_modal
 
-        set_modal_event_listeners(TempView)
+        set_modal_event_listeners(ModalView)
 
         addEventListener('load', (event) => {
             document.documentElement.style.setProperty('--chip_color', sessionStorage.getItem('chip_color'))
@@ -70,6 +70,8 @@
             // first half is single picture bets and second half has combinations of 2 pbs
             state.views = [...View.generate_views(half, 1), ...View.generate_views(pb_count - half, 2)]
             build_em_up(document.getElementById("table"), state.view)
+            build_em_up(document.getElementById("track"), new ModalView(0))
+
             document.getElementById("answer").focus()
         })
 

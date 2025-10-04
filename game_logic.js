@@ -106,15 +106,15 @@ class Point {
     }
 }
 class Rectangle {
-    constructor(x, y, width, height, number = null) {
+    constructor(x, y, width, height, number = null, radius = null) {
         this.x = x
         this.y = y
         this.width = width
         this.height = height
         this.number = number
+        this.radius = radius
         this.padding = Rectangle.current_style.padding
         this.style = Rectangle.current_style.style.substring(0)
-
     }
     get tl() { return new Point(this.x, this.y) }
     get tl_w_padding() { return new Point(this.x + this.padding, this.y + this.padding) }
@@ -162,6 +162,7 @@ class Rectangle {
             changes.width !== undefined ? changes.width : this.width,
             changes.height !== undefined ? changes.height : this.height,
             changes.number !== undefined ? changes.number : contains_alphanum(this.number) ? this.number : this.number + d_number,
+            changes.radius !== undefined ? changes.radius : this.radius
         )
     }
     // for quickly making `count` Rectangles
@@ -181,12 +182,15 @@ class Rectangle {
         this.height = bounding_box.height
     }
     to_svg_rect() {
-        return Object.assign({
+        return {
             x: this.x + (this.padding ? this.padding : 0),
             y: this.y + (this.padding ? this.padding : 0),
             width: this.width - (this.padding ? 2 * this.padding : 0),
             height: this.height - (this.padding ? 2 * this.padding : 0),
-        }, this.style ? { style: this.style } : {})
+            // NOTE: this some sick syntax
+            ...(this.radius != null && { rx: this.radius }),
+            ...(this.style != null && { style: this.style })
+        }
     }
     to_svg_text() {
         const roulette_number_order = [32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26]
@@ -206,7 +210,7 @@ class Rectangle {
             class: contains_alphanum(this.number) ? "column" : "layout",
             x: this.center.x,
             y: this.center.y,
-            "transform": `rotate(90, ${this.center.x}, ${this.center.y})`,
+            transform: `rotate(90, ${this.center.x}, ${this.center.y})`,
             fill: color
         }
     }
@@ -224,13 +228,13 @@ class Rectangle {
         Rectangle.current_style.padding = 0
     }
     // modifies `zero_rectangle`s to_svg_rect function to have the parameters of a polygon type element
-    static extend_zero_area(zero_r) {
+    static create_zero_area(zero_r) {
         const points = [
-            `${zero_r.tl.x + zero_r.padding},${zero_r.tl.y - zero_r.height + zero_r.padding}`,
-            `${zero_r.center.x - zero_r.padding},${zero_r.tl.y - zero_r.height + zero_r.padding}`,
+            `${zero_r.tl.x + zero_r.padding},${zero_r.tl.y + zero_r.padding}`,
+            `${zero_r.center.x - zero_r.padding},${zero_r.tl.y + zero_r.padding}`,
             `${zero_r.br.x - zero_r.padding},${zero_r.center.y}`,
-            `${zero_r.center.x - zero_r.padding},${zero_r.br.y + zero_r.height - zero_r.padding}`,
-            `${zero_r.tl.x + zero_r.padding},${zero_r.br.y + zero_r.height - zero_r.padding}`,
+            `${zero_r.center.x - zero_r.padding},${zero_r.br.y - zero_r.padding}`,
+            `${zero_r.tl.x + zero_r.padding},${zero_r.br.y - zero_r.padding}`,
         ]
         // new origin is moved up by height
         zero_r.y -= zero_r.height
@@ -271,8 +275,7 @@ class Rectangle {
             `${bg.tl.x - bg.width + bg.padding},${bg.center.y}`,
             `${bg.tl.x - left_filler.width + bg.padding},${bg.tl.y + bg.padding}`,
         ]
-        // NOTE: I have an if statement 
-        // that interprets a rectangle as a polygon if number == 0
+        // NOTE: interprets a rectangle as a polygon if number == 0
         bg.number = 0
         bg.to_svg_rect = () => {
             return Object.assign({
@@ -352,7 +355,7 @@ class Stack {
     }
     open(direction = DIRECTION.BOTTOM_RIGHT) {
         // TODO: make DIRECTION a map of point objects and use them as unit vectors
-        // for implicity's sake assumes direction is always BOTTOM_RIGHT
+        // for simplicity's sake assumes direction is always BOTTOM_RIGHT
         const result = []
         const vector = new Point(1, 1).scale(Stack.chip_radius)
         for (let i = 0; i < this.count; i++) {
@@ -429,14 +432,21 @@ class Stack {
         return stacks.slice(0, -1).concat(stacks[stacks.length - 1].open(direction))
     }
 }
-class TempView {
+class ModalView {
     constructor(input_payout) {
         const overflow = input_payout < 214 ? 0 : 200 * Math.floor((input_payout - 14) / 200)
         const payout = input_payout - overflow
         const chip_radius = 1
         const chip_diameter = chip_radius * 2
 
-        this.rectangles = []
+
+        Rectangle.set_padding(0)
+        const inner = new Rectangle(0, 0, chip_diameter * 8, chip_diameter * 8)
+        const zero = Rectangle.create_zero_area(inner.ctrl_cv(DIRECTION.RIGHT, { width: chip_diameter * 3, number: 0 }))
+        // TODO: implement rectangle radius technology to make pill shaped rectangles
+        this.rectangles = [inner,
+            inner.ctrl_cv(DIRECTION.DOWN, { dx: -chip_diameter * 2, dy: chip_diameter, width: inner.width + chip_diameter * 4, height: chip_diameter * 4, radius: chip_diameter * 2 }),
+            zero]
         this.chips = []
         let stacks_count, addi_count, wipe_count
         [stacks_count, addi_count, wipe_count] = this.payout_to_layout(payout)
@@ -554,13 +564,15 @@ class TempView {
 class View {
     constructor(bets, position_type, chip_placing_fn) {
         const gap = .15
+        const nr_width = 4
+        const nr_height = 5
         Rectangle.set_style("fill: tan")
         Rectangle.set_padding(-gap)
         const background = new Rectangle(0, 0, 0, 0)
         const header_background = new Rectangle(0, 0, 0, 0)
         Rectangle.set_style("fill: wheat")
         Rectangle.set_padding(gap)
-        const header = new Rectangle(6, -1 - gap * 4, 4, 2)
+        const header = new Rectangle(6, -1 - gap * 4, nr_width, 2)
         // TODO: I only care about the column (column, center, zero) a position belongs to
         const top_number = {
             [POSITION.ZERO]: 1,
@@ -574,12 +586,12 @@ class View {
             [POSITION.COLUMN_MID]: 34,
             [POSITION.COLUMN_BOT]: 34
         }[position_type]
-        const top = header.ctrl_cv(DIRECTION.DOWN, { y: 1, height: 5, number: top_number })
+        const top = header.ctrl_cv(DIRECTION.DOWN, { y: 1, height: nr_height, number: top_number })
         const middle = top.ctrl_cv(DIRECTION.DOWN)
         const bottom = middle.ctrl_cv(DIRECTION.DOWN)
         // NOTE: intermediary state to at least wrap around the middle boxes
         background.overlap(top, middle, bottom)
-        const zero = Rectangle.extend_zero_area(middle.ctrl_cv(DIRECTION.RIGHT, { number: 0 }))
+        const zero = Rectangle.create_zero_area(top.ctrl_cv(DIRECTION.RIGHT, { number: 0, height: nr_height * 3 }))
 
         const base_rectangles = [background, header_background, header, top, middle, bottom]
         // TODO: I only care about the row (TOP, MID, BOT) a position belongs to
@@ -733,4 +745,4 @@ class View {
     }
 
 }
-export { AR, POSITION, View, TempView, PICTURE_BETS }
+export { AR, POSITION, View, ModalView, PICTURE_BETS }
