@@ -65,10 +65,10 @@ const PICTURE_BETS = {
 }
 
 class Point {
-    constructor(x, y) {
+    constructor(x, y, position = null) {
         this.x = x
         this.y = y
-        this.position = null
+        this.position = position
     }
     // counts how many references of `this` array contains
     count(array) {
@@ -608,8 +608,7 @@ class View {
             [POSITION.COLUMN_BOT]: bottom
         }[position_type]
 
-        this.base_coordinate_matrix = position_type == POSITION.ZERO ?
-            View.generate_matrix(zero.tl, zero.br, 7, 3) : View.generate_matrix(top.tl, bottom.br, 7, 3)
+        this.base_coordinate_matrix = View.generate_matrix(top.tl, bottom.br, 7, 3)
 
         function is_within_winning_square(point) { return winning_square.tl.y <= point.y && point.y <= winning_square.br.y }
         function not_on_bottom_row(point) { return point.y != bottom.br.y }
@@ -679,8 +678,7 @@ class View {
                 const first_column = this.coordinate_matrix.filter((p) => p.x == zero.tl.x)
                 Point.multiple_set_position(first_column, AR.CORNER, AR.SPLIT, AR.STREET, AR.SPLIT, AR.STREET, AR.SPLIT)
 
-                const zero_su = this.coordinate_matrix.find((p) => p.x == zero.center.x && p.y == zero.center.y)
-                zero_su.set_position(AR.SU)
+                this.coordinate_matrix.push(new Point(zero.center.x, zero.center.y, AR.SU))
 
             } else {
                 const top_row = this.coordinate_matrix.filter((p) => p.y == top.tl.y)
