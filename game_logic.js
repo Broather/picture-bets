@@ -19,17 +19,6 @@ const POSITION = {
     COLUMN_MID: "COLUMN_MID",
     COLUMN_BOT: "COLUMN_BOT"
 }
-const DIRECTION = {
-    UP: "UP",
-    DOWN: "DOWN",
-    LEFT: "LEFT",
-    RIGHT: "RIGHT",
-    TOWARDS_USER: "TOWARDS_USER",
-    TOP_RIGHT: "TOP_RIGHT",
-    TOP_LEFT: "TOP_LEFT",
-    BOTTOM_RIGHT: "BOTTOM_RIGHT",
-    BOTTOM_LEFT: "BOTTOM_LEFT",
-}
 const PICTURE_BETS = {
     pbs: {
         // single
@@ -105,6 +94,17 @@ class Point {
         }
     }
 }
+const DIRECTION = {
+    UP: new Point(0, -1),
+    DOWN: new Point(0, 1),
+    LEFT: new Point(-1, 0),
+    RIGHT: new Point(1, 0),
+    TOWARDS_USER: new Point(0, 0),
+    TOP_RIGHT: new Point(1, -1),
+    TOP_LEFT: new Point(-1, -1),
+    BOTTOM_RIGHT: new Point(1, 1),
+    BOTTOM_LEFT: new Point(-1, 1),
+}
 class Rectangle {
     constructor(x, y, width, height, number = null, radius = null) {
         this.x = x
@@ -124,35 +124,10 @@ class Rectangle {
     ctrl_cv(direction, changes = {}) {
         // new coordinates and difference from old number to new
         let x, y, d_number
-        switch (direction) {
-            case DIRECTION.UP:
-                x = this.x
-                y = this.y - this.height
-                d_number = - 1
-                break
-            case DIRECTION.DOWN:
-                x = this.x
-                y = this.y + this.height
-                d_number = + 1
-                break
-            case DIRECTION.LEFT:
-                x = this.x - this.width
-                y = this.y
-                d_number = + 3
-                break
-            case DIRECTION.RIGHT:
-                x = this.x + this.width
-                y = this.y
-                d_number = - 3
-                break
-            case DIRECTION.TOWARDS_USER:
-                x = this.x
-                y = this.y
-                d_number = 0
-            default:
-                console.assert(false, "ERROR: unrecognised direction")
-                break
-        }
+        x = this.x + direction.x * this.width
+        y = this.y + direction.y * this.height
+        d_number = -direction.x * 3 + direction.y
+
         const dx = changes.dx !== undefined ? changes.dx : 0
         const dy = changes.dy !== undefined ? changes.dy : 0
 
@@ -349,64 +324,34 @@ class Stack {
         this.x = x
         this.y = y
         this.count = count
+        this.radius = Stack.chip_radius
+        this.diameter = Stack.chip_diameter
     }
     add(value) {
         this.count += value
     }
     open(direction = DIRECTION.BOTTOM_RIGHT) {
-        // TODO: make DIRECTION a map of point objects and use them as unit vectors
-        // for simplicity's sake assumes direction is always BOTTOM_RIGHT
         const result = []
-        const vector = new Point(1, 1).scale(Stack.chip_radius)
+        // TODO: nice place to introduce some variation with random ranges
+        const scale = new Point(.4, .65)
         for (let i = 0; i < this.count; i++) {
-            result.push(new Stack(this.x + vector.x * i, this.y + vector.y * i, 1))
+            result.push(new Stack(this.x + direction.x * scale.x * i, this.y + direction.y * scale.y * i, 1))
         }
         return result
     }
     ctrl_cv(direction, changes = {}) {
         // TODO: add diagonal directions
         let x, y
-        switch (direction) {
-            case DIRECTION.UP:
-                x = this.x
-                y = this.y - Stack.chip_diameter
-                break
-            case DIRECTION.DOWN:
-                x = this.x
-                y = this.y + Stack.chip_diameter
-                break
-            case DIRECTION.LEFT:
-                x = this.x - Stack.chip_diameter
-                y = this.y
-                break
-            case DIRECTION.RIGHT:
-                x = this.x + Stack.chip_diameter
-                y = this.y
-                break
-            case DIRECTION.TOWARDS_USER:
-                x = this.x
-                y = this.y
-                break
-            case DIRECTION.TOP_RIGHT:
-                x = this.x + Stack.chip_radius
-                y = this.y - .85 * Stack.chip_diameter
-                break
-            case DIRECTION.TOP_LEFT:
-                x = this.x - Stack.chip_radius
-                y = this.y - .85 * Stack.chip_diameter
-                break
-            case DIRECTION.BOTTOM_RIGHT:
-                x = this.x + Stack.chip_radius
-                y = this.y + .85 * Stack.chip_diameter
-                break
-            case DIRECTION.BOTTOM_LEFT:
-                x = this.x - Stack.chip_radius
-                y = this.y + .85 * Stack.chip_diameter
-                break
-            default:
-                console.assert(false, "ERROR: unrecognised direction")
-                break
+        if (direction.x * direction.y == 0) {
+            // straight
+            x = this.x + direction.x * this.diameter
+            y = this.y + direction.y * this.diameter
+        } else {
+            // diagonal
+            x = this.x + direction.x * this.radius
+            y = this.y + direction.y * .85 * this.diameter
         }
+
         const dx = changes.dx !== undefined ? changes.dx : 0
         const dy = changes.dy !== undefined ? changes.dy : 0
 
